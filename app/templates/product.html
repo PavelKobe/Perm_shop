@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <nav class="breadcrumbs" aria-label="Хлебные крошки">
+    <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+      {% for crumb in breadcrumbs %}
+        <li
+          itemprop="itemListElement"
+          itemscope
+          itemtype="https://schema.org/ListItem"
+        >
+          <a href="{{ crumb.url }}" itemprop="item">
+            <span itemprop="name">{{ crumb.name }}</span>
+          </a>
+          <meta itemprop="position" content="{{ loop.index }}" />
+        </li>
+      {% endfor %}
+    </ol>
+  </nav>
+
+  <article
+    class="product-detail"
+    itemscope
+    itemtype="https://schema.org/Product"
+  >
+    <header class="product-detail-header">
+      <h1 itemprop="name">{{ product.name }}</h1>
+    </header>
+
+    <div class="product-detail-body">
+      {% if product.image_url %}
+        <div class="product-detail-image">
+          <img
+            src="{{ product.image_url }}"
+            alt="{{ product.name }}"
+            itemprop="image"
+          />
+        </div>
+      {% endif %}
+
+      <div class="product-detail-info">
+        <div
+          class="product-detail-price"
+          itemprop="offers"
+          itemscope
+          itemtype="https://schema.org/Offer"
+        >
+          <span class="price" itemprop="price">{{ "%.0f"|format(product.price) }} ₽</span>
+          <meta itemprop="priceCurrency" content="RUB" />
+          {% if product.old_price %}
+            <span class="old-price">{{ "%.0f"|format(product.old_price) }} ₽</span>
+          {% endif %}
+          <link itemprop="availability" href="https://schema.org/InStock" />
+        </div>
+
+        {% if product.description %}
+          <div class="product-detail-description" itemprop="description">
+            {{ product.description }}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </article>
+{% endblock %}
+
+

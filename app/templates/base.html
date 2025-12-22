@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <title>
+      {% if page_title %}{{ page_title }} — Отдел женской кожаной обуви в ТЦ «Карнавал» в Перми{% else %}Отдел женской
+      кожаной обуви в ТЦ «Карнавал» в Перми{% endif %}
+    </title>
+    <meta
+      name="description"
+      content="Отдел по продаже женской кожаной обуви в ТЦ «Карнавал» в Перми: зимняя и демисезонная обувь из натуральной кожи."
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      property="og:title"
+      content="{{ page_title or 'Отдел женской кожаной обуви в ТЦ «Карнавал» в Перми' }}"
+    />
+    <meta
+      property="og:description"
+      content="Женская кожаная обувь в Перми: зимняя и демисезонная, премиальные материалы, отдел в ТЦ «Карнавал»."
+    />
+    <meta property="og:type" content="website" />
+    <link rel="stylesheet" href="{{ url_for('static', path='/style.css') }}" />
+    <script src="https://unpkg.com/htmx.org@2.0.0" defer></script>
+    {% block head_extra %}{% endblock %}
+  </head>
+  <body>
+    <header class="header">
+      <div class="container header-inner">
+        <div class="logo">
+          <a href="/">Отдел женской кожаной обуви</a>
+        </div>
+        <nav class="nav">
+          <a href="/" class="nav-link">Главная</a>
+          <a href="/products" class="nav-link">Товары</a>
+          <a href="/promotions" class="nav-link">Акции</a>
+          <a href="/map" class="nav-link">Показать на карте</a>
+          <a href="/category/zhenskaya-zimnyaya-obuv" class="nav-link">Зимняя обувь</a>
+          <a href="/category/zhenskaya-demisezonnyaya-obuv" class="nav-link">Демисезонная обувь</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="main container">
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+      <div class="container footer-inner">
+        <p>&copy; {{ (now() if now is defined else '2025') }} Отдел женской кожаной обуви, ТЦ «Карнавал», Пермь.</p>
+      </div>
+    </footer>
+  </body>
+</html>
+
+

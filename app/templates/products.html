@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="hero">
+    <div class="hero-text">
+      <h1>Женская кожаная обувь</h1>
+      <p>
+        Зимняя и демисезонная женская обувь из натуральной кожи в отделе ТЦ «Карнавал» в Перми. Все модели доступны к
+        примерке на месте.
+      </p>
+    </div>
+    <div class="hero-photo">
+      <div class="hero-photo-placeholder"></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Зимняя женская обувь</h2>
+    <div class="product-grid">
+      {% for product in winter_products %}
+        <article class="product-card" itemscope itemtype="https://schema.org/Product">
+          <a href="/product/{{ product.id }}-{{ product.slug }}" class="product-card-link">
+            <div class="product-card-image">
+              {% if product.image_url %}
+                <img
+                  src="{{ product.image_url }}"
+                  alt="{{ product.name }}"
+                  itemprop="image"
+                />
+              {% endif %}
+            </div>
+            <div class="product-card-body">
+              <h3 class="product-card-title" itemprop="name">{{ product.name }}</h3>
+              <div
+                class="product-card-price"
+                itemprop="offers"
+                itemscope
+                itemtype="https://schema.org/Offer"
+              >
+                <span class="price" itemprop="price">{{ "%.0f"|format(product.price) }} ₽</span>
+                <meta itemprop="priceCurrency" content="RUB" />
+                {% if product.old_price %}
+                  <span class="old-price">{{ "%.0f"|format(product.old_price) }} ₽</span>
+                {% endif %}
+                <link itemprop="availability" href="https://schema.org/InStock" />
+              </div>
+              {% if product.description %}
+                <p class="product-description" itemprop="description">
+                  {{ product.description }}
+                </p>
+              {% endif %}
+            </div>
+          </a>
+        </article>
+      {% else %}
+        <p class="product-empty">Зимних моделей пока нет.</p>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Демисезонная женская обувь</h2>
+    <div class="product-grid">
+      {% for product in demiseason_products %}
+        <article class="product-card" itemscope itemtype="https://schema.org/Product">
+          <a href="/product/{{ product.id }}-{{ product.slug }}" class="product-card-link">
+            <div class="product-card-image">
+              {% if product.image_url %}
+                <img
+                  src="{{ product.image_url }}"
+                  alt="{{ product.name }}"
+                  itemprop="image"
+                />
+              {% endif %}
+            </div>
+            <div class="product-card-body">
+              <h3 class="product-card-title" itemprop="name">{{ product.name }}</h3>
+              <div
+                class="product-card-price"
+                itemprop="offers"
+                itemscope
+                itemtype="https://schema.org/Offer"
+              >
+                <span class="price" itemprop="price">{{ "%.0f"|format(product.price) }} ₽</span>
+                <meta itemprop="priceCurrency" content="RUB" />
+                {% if product.old_price %}
+                  <span class="old-price">{{ "%.0f"|format(product.old_price) }} ₽</span>
+                {% endif %}
+                <link itemprop="availability" href="https://schema.org/InStock" />
+              </div>
+              {% if product.description %}
+                <p class="product-description" itemprop="description">
+                  {{ product.description }}
+                </p>
+              {% endif %}
+            </div>
+          </a>
+        </article>
+      {% else %}
+        <p class="product-empty">Демисезонных моделей пока нет.</p>
+      {% endfor %}
+    </div>
+  </section>
+{% endblock %}
+
+

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="hero">
+    <h1>{{ category.name }}</h1>
+  </section>
+
+  <section class="filters">
+    <form
+      id="category-filters"
+      class="filters-form"
+      hx-get="/hx/category/{{ category.slug }}/filter"
+      hx-target="#product-list"
+      hx-push-url="true"
+    >
+      <div class="filters-row">
+        <label>
+          Размер:
+          <select name="size">
+            <option value="">Все</option>
+            {% for size in available_sizes %}
+              <option value="{{ size }}" {% if size == active_size %}selected{% endif %}>{{ size }}</option>
+            {% endfor %}
+          </select>
+        </label>
+
+        <label>
+          Цвет:
+          <select name="color">
+            <option value="">Все</option>
+            {% for color in available_colors %}
+              <option value="{{ color }}" {% if color == active_color %}selected{% endif %}>{{ color }}</option>
+            {% endfor %}
+          </select>
+        </label>
+
+        <button type="submit">Показать</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="product-section">
+    <div id="product-list" class="product-grid">
+      {% include "partials/product_list.html" %}
+    </div>
+  </section>
+{% endblock %}
+
+

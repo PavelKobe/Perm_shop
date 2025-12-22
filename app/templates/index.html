@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section class="hero">
+    <div class="hero-text">
+      <h1>Отдел женской кожаной обуви в ТЦ «Карнавал»</h1>
+      <p>
+        Небольшой отдел женской кожаной обуви в торговом центре «Карнавал» в Перми. Зимние и демисезонные модели из
+        натуральной кожи, аккуратная посадка и внимание к деталям.
+      </p>
+      <p>
+        Заходите на примерку в ТЦ «Карнавал»: поможем подобрать пару под ваш стиль, сезон и повседневные задачи.
+      </p>
+    </div>
+    <div class="hero-photo">
+      <img
+        src="/static/images/shop/front.jpg"
+        alt="Отдел женской кожаной обуви в ТЦ «Карнавал»"
+        class="hero-photo-img"
+      />
+    </div>
+  </section>
+
+  <section class="categories">
+    <h2>Разделы</h2>
+    <div class="category-grid">
+      <a href="/products" class="category-card">Товары</a>
+      <a href="/promotions" class="category-card">Акции</a>
+      <a href="/map" class="category-card">Как нас найти</a>
+      <a href="/category/zhenskaya-zimnyaya-obuv" class="category-card">Зимняя женская обувь</a>
+      <a href="/category/zhenskaya-demisezonnyaya-obuv" class="category-card">Демисезонная женская обувь</a>
+    </div>
+  </section>
+
+  <section class="product-section">
+    <div class="product-section-header">
+      <h2>Актуальные модели</h2>
+      <div class="product-filters">
+        <button
+          hx-get="/hx/products/zhenskaya-zimnyaya-obuv"
+          hx-target="#product-list"
+          hx-swap="innerHTML"
+        >
+          Зимняя
+        </button>
+        <button
+          hx-get="/hx/products/zhenskaya-demisezonnyaya-obuv"
+          hx-target="#product-list"
+          hx-swap="innerHTML"
+        >
+          Демисезонная
+        </button>
+        <button
+          hx-get="/hx/products/obuv-so-skidkoy"
+          hx-target="#product-list"
+          hx-swap="innerHTML"
+        >
+          Со скидкой
+        </button>
+        <button
+          hx-get="/hx/products/novinki"
+          hx-target="#product-list"
+          hx-swap="innerHTML"
+        >
+          Новинки
+        </button>
+      </div>
+    </div>
+
+    <div id="product-list" class="product-grid">
+      {% include "partials/product_list.html" %}
+    </div>
+  </section>
+{% endblock %}
+

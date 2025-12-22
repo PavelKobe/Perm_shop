@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <section
+    class="section"
+    itemscope
+    itemtype="https://schema.org/LocalBusiness"
+  >
+    <h1 itemprop="name">Отдел женской кожаной обуви в ТЦ «Карнавал» — показать на карте</h1>
+    <p itemprop="description">
+      Отдел по продаже женской кожаной обуви в торговом центре «Карнавал» в Перми. Зимняя и демисезонная обувь из
+      натуральной кожи.
+    </p>
+
+    <div class="contact-grid">
+      <div class="contact-info">
+        <h2>Показать на карте</h2>
+        <p>
+          <span itemprop="address" itemscope itemtype="https://schema.org/PostalAddress">
+            <span itemprop="addressLocality">г. Пермь</span>,
+            <span itemprop="streetAddress">ул. Уинская, 8А, ТЦ «Карнавал»</span>
+          </span>
+        </p>
+        <p>
+          Телефон:
+          <a href="tel:+73422000000" itemprop="telephone">+7 (342) 200-00-00</a>
+        </p>
+        <p>
+          Часы работы:
+          <span itemprop="openingHours" content="Mo-Su 10:00-21:00">ежедневно 10:00–21:00</span>
+        </p>
+      </div>
+
+      <div class="map-wrapper" itemprop="geo" itemscope itemtype="https://schema.org/GeoCoordinates">
+        <meta itemprop="latitude" content="57.948015" />
+        <meta itemprop="longitude" content="56.234821" />
+        <div class="map-embed">
+          <iframe
+            src="https://yandex.ru/map-widget/v1/?text=Карнавал, Пермь&amp;z=17&amp;l=map"
+            width="100%"
+            height="320"
+            frameborder="0"
+            loading="lazy"
+          ></iframe>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock %}
+
+

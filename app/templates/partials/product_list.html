@@ -1,0 +1,44 @@
+{% if products %}
+  {% for product in products %}
+    <article
+      class="product-card"
+      itemscope
+      itemtype="https://schema.org/Product"
+    >
+      <a
+        href="/product/{{ product.id }}-{{ product.slug }}"
+        class="product-card-link"
+      >
+        {% if product.image_url %}
+          <div class="product-card-image">
+            <img
+              src="{{ product.image_url }}"
+              alt="{{ product.name }}"
+              itemprop="image"
+            />
+          </div>
+        {% endif %}
+        <div class="product-card-body">
+          <h3 class="product-card-title" itemprop="name">{{ product.name }}</h3>
+          <div
+            class="product-card-price"
+            itemprop="offers"
+            itemscope
+            itemtype="https://schema.org/Offer"
+          >
+            <span class="price" itemprop="price">{{ "%.0f"|format(product.price) }} ₽</span>
+            <meta itemprop="priceCurrency" content="RUB" />
+            {% if product.old_price %}
+              <span class="old-price">{{ "%.0f"|format(product.old_price) }} ₽</span>
+            {% endif %}
+            <link itemprop="availability" href="https://schema.org/InStock" />
+          </div>
+        </div>
+      </a>
+    </article>
+  {% endfor %}
+{% else %}
+  <p class="product-empty">В этой категории пока нет моделей. Загляните чуть позже или выберите другую категорию.</p>
+{% endif %}
+
+
