@@ -1,49 +1,72 @@
 {% extends "base.html" %}
 
-{% block content %}
-  <section class="hero">
-    <h1>{{ category.name }}</h1>
-  </section>
-
-  <section class="filters">
-    <form
-      id="category-filters"
-      class="filters-form"
-      hx-get="/hx/category/{{ category.slug }}/filter"
-      hx-target="#product-list"
-      hx-push-url="true"
-    >
-      <div class="filters-row">
-        <label>
-          Размер:
-          <select name="size">
-            <option value="">Все</option>
-            {% for size in available_sizes %}
-              <option value="{{ size }}" {% if size == active_size %}selected{% endif %}>{{ size }}</option>
-            {% endfor %}
-          </select>
-        </label>
-
-        <label>
-          Цвет:
-          <select name="color">
-            <option value="">Все</option>
-            {% for color in available_colors %}
-              <option value="{{ color }}" {% if color == active_color %}selected{% endif %}>{{ color }}</option>
-            {% endfor %}
-          </select>
-        </label>
-
-        <button type="submit">Показать</button>
-      </div>
-    </form>
-  </section>
-
-  <section class="product-section">
-    <div id="product-list" class="product-grid">
-      {% include "partials/product_list.html" %}
-    </div>
-  </section>
+{% block head_extra %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": "{{ category.name }}",
+  "description": "{{ meta_description }}",
+  "url": "{{ request.url }}",
+  "breadcrumb": {
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {% for bc in breadcrumbs %}
+      {
+        "@type": "ListItem",
+        "position": {{ loop.index }},
+        "name": "{{ bc.name }}",
+        "item": "{{ request.base_url | replace('//', '//') | replace('/$', '') }}{{ bc.url }}"
+      }{% if not loop.last %},{% endif %}
+      {% endfor %}
+    ]
+  }
+}
+</script>
 {% endblock %}
 
+{% block content %}
+<nav class="breadcrumbs" aria-label="Хлебные крошки">
+  <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+    {% for bc in breadcrumbs %}
+    <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+      {% if loop.last %}
+        <span itemprop="name">{{ bc.name }}</span>
+      {% else %}
+        <a href="{{ bc.url }}" itemprop="item"><span itemprop="name">{{ bc.name }}</span></a> /
+      {% endif %}
+      <meta itemprop="position" content="{{ loop.index }}" />
+    </li>
+    {% endfor %}
+  </ol>
+</nav>
 
+<section class="category-page">
+  <header class="category-header">
+    <span class="category-header-icon">{{ category.icon }}</span>
+    <h1>{{ category.name }}</h1>
+  </header>
+
+  <p class="category-intro">
+    {{ category.name }} из натуральной кожи в Перми. Выберите тип обуви для просмотра моделей.
+  </p>
+
+  <div class="subcategory-grid" itemscope itemtype="https://schema.org/ItemList">
+    <meta itemprop="name" content="{{ category.name }}" />
+    {% for subcat in category.subcategories %}
+    <a 
+      href="/{{ category.slug }}/{{ subcat.slug }}" 
+      class="subcategory-card"
+      itemprop="itemListElement" 
+      itemscope 
+      itemtype="https://schema.org/ListItem"
+    >
+      <meta itemprop="position" content="{{ loop.index }}" />
+      <span class="subcategory-icon">👢</span>
+      <span class="subcategory-name" itemprop="name">{{ subcat.name }}</span>
+      <span class="subcategory-arrow">→</span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

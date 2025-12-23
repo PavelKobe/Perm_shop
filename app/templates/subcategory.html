@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block head_extra %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": "{{ subcategory.name }} — {{ category.name }}",
+  "description": "{{ meta_description }}",
+  "url": "{{ request.url }}",
+  "breadcrumb": {
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {% for bc in breadcrumbs %}
+      {
+        "@type": "ListItem",
+        "position": {{ loop.index }},
+        "name": "{{ bc.name }}",
+        "item": "{{ request.base_url | replace('//', '//') | replace('/$', '') }}{{ bc.url }}"
+      }{% if not loop.last %},{% endif %}
+      {% endfor %}
+    ]
+  },
+  "mainEntity": {
+    "@type": "ItemList",
+    "itemListElement": [
+      {% for product in products %}
+      {
+        "@type": "ListItem",
+        "position": {{ loop.index }},
+        "item": {
+          "@type": "Product",
+          "name": "{{ product.name }}",
+          "url": "{{ request.base_url | replace('//', '//') | replace('/$', '') }}/product/{{ product.id }}-{{ product.slug }}",
+          "image": "{{ request.base_url | replace('//', '//') | replace('/$', '') }}{{ product.image_url }}",
+          "offers": {
+            "@type": "Offer",
+            "price": "{{ product.price }}",
+            "priceCurrency": "RUB",
+            "availability": "https://schema.org/InStock"
+          }
+        }
+      }{% if not loop.last %},{% endif %}
+      {% endfor %}
+    ]
+  }
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<nav class="breadcrumbs" aria-label="Хлебные крошки">
+  <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+    {% for bc in breadcrumbs %}
+    <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+      {% if loop.last %}
+        <span itemprop="name">{{ bc.name }}</span>
+      {% else %}
+        <a href="{{ bc.url }}" itemprop="item"><span itemprop="name">{{ bc.name }}</span></a> /
+      {% endif %}
+      <meta itemprop="position" content="{{ loop.index }}" />
+    </li>
+    {% endfor %}
+  </ol>
+</nav>
+
+<section class="subcategory-page">
+  <header class="subcategory-header">
+    <h1>{{ subcategory.name }}</h1>
+    <p class="subcategory-subtitle">{{ category.name }} из натуральной кожи в Перми</p>
+  </header>
+
+  {% if products %}
+  <div class="product-grid">
+    {% for product in products %}
+    <article class="product-card" itemscope itemtype="https://schema.org/Product">
+      <a href="/product/{{ product.id }}-{{ product.slug }}" class="product-card-link">
+        <div class="product-card-image">
+          {% if product.image_url %}
+          <img 
+            src="{{ product.image_url }}" 
+            alt="{{ product.name }}" 
+            itemprop="image"
+            loading="lazy"
+          />
+          {% endif %}
+          {% if product.is_new %}
+          <span class="product-badge product-badge-new">Новинка</span>
+          {% endif %}
+          {% if product.old_price %}
+          <span class="product-badge product-badge-sale">Скидка</span>
+          {% endif %}
+        </div>
+        <div class="product-card-body">
+          <h3 class="product-card-title" itemprop="name">{{ product.name }}</h3>
+          <div class="product-card-price" itemprop="offers" itemscope itemtype="https://schema.org/Offer">
+            <span class="price" itemprop="price" content="{{ product.price }}">{{ product.price | int }} ₽</span>
+            <meta itemprop="priceCurrency" content="RUB" />
+            {% if product.old_price %}
+            <span class="old-price">{{ product.old_price | int }} ₽</span>
+            {% endif %}
+          </div>
+          {% if product.color %}
+          <div class="product-card-color">{{ product.color }}</div>
+          {% endif %}
+        </div>
+      </a>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="product-empty">В этой категории пока нет товаров.</p>
+  {% endif %}
+</section>
+{% endblock %}
+

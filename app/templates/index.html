@@ -1,90 +1,343 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <section class="hero">
-    <div class="hero-text">
-      <h1>Отдел женской кожаной обуви в ТЦ «Алмаз» Планета Обуви</h1>
+<section class="hero animate-on-load">
+  <div class="hero-text">
+    <h1 class="animate-slide-up" style="--delay: 0.1s">Женская кожаная обувь в Перми</h1>
+    <p class="animate-slide-up" style="--delay: 0.2s">
+      Магазин «Планета Обуви» в ТЦ «Алмаз». Зимняя, демисезонная и летняя обувь из натуральной кожи.
+      Большой выбор моделей, примерка на месте.
+    </p>
+    <p class="hero-contacts animate-slide-up" style="--delay: 0.3s">
+      <span class="contact-item">📍 ул. Куйбышева, 37, цокольный этаж</span>
+      <a href="tel:+79028018513" class="contact-phone pulse-on-hover">📞 +7 (902) 801-85-13</a>
+    </p>
+  </div>
+  <div class="hero-photo animate-scale-in" style="--delay: 0.2s">
+    <img
+      src="{{ url_for('static', path='/images/shop/Adema.jpg') }}"
+      alt="Магазин женской кожаной обуви в Перми — Планета Обуви"
+      class="hero-photo-img"
+    />
+    <div class="hero-photo-shine"></div>
+  </div>
+</section>
+
+<!-- Преимущества -->
+<section class="usp-section">
+  <div class="usp-grid">
+    <div class="usp-card animate-card" style="--delay: 0.1s">
+      <div class="usp-icon">👐</div>
+      <h3>Натуральная кожа</h3>
+      <p>Только качественные материалы от проверенных производителей</p>
+    </div>
+    <div class="usp-card animate-card" style="--delay: 0.2s">
+      <div class="usp-icon">👠</div>
+      <h3>1000+ моделей</h3>
+      <p>Огромный выбор на любой вкус: от классики до трендов</p>
+    </div>
+    <div class="usp-card animate-card" style="--delay: 0.3s">
+      <div class="usp-icon">📏</div>
+      <h3>Все размеры</h3>
+      <p>Размерный ряд от 35 до 42, включая нестандартные</p>
+    </div>
+  </div>
+</section>
+
+<!-- Акционный баннер -->
+{% if promotions %}
+<section class="promo-banner animate-fade-in">
+  <div class="promo-banner-content">
+    <div class="promo-banner-badge">🔥 Акция</div>
+    <h2>{{ promotions[0].title }}</h2>
+    <p>{{ promotions[0].description }}</p>
+    <a href="/promotions" class="promo-banner-btn pulse-on-hover">Смотреть все акции →</a>
+  </div>
+  <div class="promo-banner-decoration">
+    <span class="promo-percent">{{ promotions[0].discount_text }}</span>
+  </div>
+</section>
+{% endif %}
+
+<!-- Категории -->
+<section class="categories">
+  <h2 class="section-title animate-fade-in">Каталог обуви</h2>
+  <div class="category-grid">
+    {% for cat in categories %}
+    <a href="/category/{{ cat.slug }}" class="category-card category-card-large animate-card" style="--delay: {{ loop.index * 0.1 }}s">
+      <span class="category-icon float-animation" style="--float-delay: {{ loop.index * 0.2 }}s">{{ cat.icon }}</span>
+      <span class="category-label">{{ cat.name }}</span>
+      <span class="category-count">{{ cat.subcategories | length }} {{ 'подкатегорий' if cat.subcategories | length > 4 else 'подкатегории' if cat.subcategories | length > 1 else 'подкатегория' }}</span>
+      <span class="category-arrow">→</span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+
+<!-- Быстрые ссылки -->
+<section class="quick-links">
+  <div class="category-grid">
+    <a href="/promotions" class="category-card animate-card" style="--delay: 0.4s">
+      <span class="category-icon fire-animation">🔥</span>
+      <span class="category-label">Акции и скидки</span>
+      <span class="category-arrow">→</span>
+    </a>
+    <a href="/map" class="category-card animate-card" style="--delay: 0.5s">
+      <span class="category-icon bounce-animation">📍</span>
+      <span class="category-label">Как нас найти</span>
+      <span class="category-arrow">→</span>
+    </a>
+  </div>
+</section>
+
+<!-- Актуальные товары -->
+{% if featured_products %}
+<section class="product-section">
+  <div class="product-section-header">
+    <h2 class="section-title animate-fade-in">Актуальные модели</h2>
+    <div class="product-filters">
+      <button
+        hx-get="/hx/products/featured"
+        hx-target="#product-list"
+        hx-swap="innerHTML"
+        class="filter-btn active"
+      >
+        Актуальные
+      </button>
+      <button
+        hx-get="/hx/products/new"
+        hx-target="#product-list"
+        hx-swap="innerHTML"
+        class="filter-btn"
+      >
+        Новинки
+      </button>
+      <button
+        hx-get="/hx/products/sale"
+        hx-target="#product-list"
+        hx-swap="innerHTML"
+        class="filter-btn"
+      >
+        Со скидкой
+      </button>
+    </div>
+  </div>
+
+  <div id="product-list" class="product-grid">
+    {% for product in featured_products %}
+    <article class="product-card animate-product" style="--delay: {{ loop.index * 0.08 }}s" itemscope itemtype="https://schema.org/Product">
+      <a href="/product/{{ product.id }}-{{ product.slug }}" class="product-card-link">
+        <div class="product-card-image">
+          {% if product.image_url %}
+          <img src="{{ product.image_url }}" alt="{{ product.name }}" itemprop="image" loading="lazy" />
+          {% endif %}
+          {% if product.is_new %}
+          <span class="product-badge product-badge-new shimmer">Новинка</span>
+          {% endif %}
+          {% if product.old_price %}
+          <span class="product-badge product-badge-sale pulse-badge">Скидка</span>
+          {% endif %}
+        </div>
+        <div class="product-card-body">
+          <h3 class="product-card-title" itemprop="name">{{ product.name }}</h3>
+          <div class="product-card-price" itemprop="offers" itemscope itemtype="https://schema.org/Offer">
+            <span class="price" itemprop="price" content="{{ product.price }}">{{ product.price | int }} ₽</span>
+            <meta itemprop="priceCurrency" content="RUB" />
+            {% if product.old_price %}
+            <span class="old-price">{{ product.old_price | int }} ₽</span>
+            {% endif %}
+          </div>
+        </div>
+      </a>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<!-- О магазине -->
+<section class="about-section">
+  <div class="about-grid">
+    <div class="about-text animate-slide-up">
+      <h2 class="section-title">О нашем магазине</h2>
       <p>
-        Небольшой отдел женской кожаной обуви в ТЦ «Алмаз» "Планета обуви" в Перми. Зимние и демисезонные модели из
-        натуральной кожи, аккуратная посадка и внимание к деталям.
+        <strong>«Планета Обуви»</strong> — это уютный отдел в ТЦ «Алмаз», где вы найдёте 
+        качественную женскую обувь из натуральной кожи на любой сезон.
       </p>
       <p>
-        Заходите на примерку в ТЦ «Алмаз» Планета Обуви отдел ADEMA: поможем подобрать пару под ваш стиль, сезон и повседневные задачи.
+        Мы тщательно отбираем модели, чтобы каждая пара радовала вас комфортом и стилем. 
+        Наши продавцы помогут подобрать идеальный размер и расскажут об уходе за кожаной обувью.
       </p>
-    </div>
-    <div class="hero-photo">
-      <img
-        src="/static/images/shop/Adema.jpg"
-        alt="Отдел женской кожаной обуви в ТЦ «Алмаз» Планета Обуви"
-        class="hero-photo-img"
-      />
-    </div>
-  </section>
-
-  <section class="categories">
-    <h2>Разделы</h2>
-    <div class="category-grid">
-      <a href="/products" class="category-card">
-        <span class="category-icon">👢</span>
-        <span class="category-label">Товары</span>
-      </a>
-      <a href="/promotions" class="category-card">
-        <span class="category-icon">🔥</span>
-        <span class="category-label">Акции</span>
-      </a>
-      <a href="/map" class="category-card">
-        <span class="category-icon">📍</span>
-        <span class="category-label">Как нас найти</span>
-      </a>
-      <a href="/category/zhenskaya-zimnyaya-obuv" class="category-card">
-        <span class="category-icon">❄️</span>
-        <span class="category-label">Зимняя женская обувь</span>
-      </a>
-      <a href="/category/zhenskaya-demisezonnyaya-obuv" class="category-card">
-        <span class="category-icon">🍂</span>
-        <span class="category-label">Демисезонная женская обувь</span>
-      </a>
-    </div>
-  </section>
-
-  <section class="product-section">
-    <div class="product-section-header">
-      <h2>Актуальные модели</h2>
-      <div class="product-filters">
-        <button
-          hx-get="/hx/products/zhenskaya-zimnyaya-obuv"
-          hx-target="#product-list"
-          hx-swap="innerHTML"
-        >
-          Зимняя
-        </button>
-        <button
-          hx-get="/hx/products/zhenskaya-demisezonnyaya-obuv"
-          hx-target="#product-list"
-          hx-swap="innerHTML"
-        >
-          Демисезонная
-        </button>
-        <button
-          hx-get="/hx/products/obuv-so-skidkoy"
-          hx-target="#product-list"
-          hx-swap="innerHTML"
-        >
-          Со скидкой
-        </button>
-        <button
-          hx-get="/hx/products/novinki"
-          hx-target="#product-list"
-          hx-swap="innerHTML"
-        >
-          Новинки
-        </button>
+      <div class="about-stats">
+        <div class="stat-item">
+          <span class="stat-number">10+</span>
+          <span class="stat-label">лет работы</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">1000+</span>
+          <span class="stat-label">моделей</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">5000+</span>
+          <span class="stat-label">довольных клиентов</span>
+        </div>
       </div>
     </div>
-
-    <div id="product-list" class="product-grid">
-      {% include "partials/product_list.html" %}
+    <div class="about-features animate-scale-in">
+      <div class="feature-item">
+        <span class="feature-icon">✓</span>
+        <span>Гарантия на все товары</span>
+      </div>
+      <div class="feature-item">
+        <span class="feature-icon">✓</span>
+        <span>Бесплатная примерка</span>
+      </div>
+      <div class="feature-item">
+        <span class="feature-icon">✓</span>
+        <span>Консультация специалиста</span>
+      </div>
+      <div class="feature-item">
+        <span class="feature-icon">✓</span>
+        <span>Обмен и возврат 14 дней</span>
+      </div>
+      <div class="feature-item">
+        <span class="feature-icon">✓</span>
+        <span>Подарочная упаковка</span>
+      </div>
     </div>
-  </section>
-{% endblock %}
+  </div>
+</section>
 
+<!-- Новинки -->
+{% if new_products %}
+<section class="product-section">
+  <h2 class="section-title animate-fade-in">Новинки</h2>
+  <div class="product-grid">
+    {% for product in new_products %}
+    <article class="product-card animate-product" style="--delay: {{ loop.index * 0.1 }}s" itemscope itemtype="https://schema.org/Product">
+      <a href="/product/{{ product.id }}-{{ product.slug }}" class="product-card-link">
+        <div class="product-card-image">
+          {% if product.image_url %}
+          <img src="{{ product.image_url }}" alt="{{ product.name }}" itemprop="image" loading="lazy" />
+          {% endif %}
+          <span class="product-badge product-badge-new shimmer">Новинка</span>
+        </div>
+        <div class="product-card-body">
+          <h3 class="product-card-title" itemprop="name">{{ product.name }}</h3>
+          <div class="product-card-price" itemprop="offers" itemscope itemtype="https://schema.org/Offer">
+            <span class="price" itemprop="price" content="{{ product.price }}">{{ product.price | int }} ₽</span>
+            <meta itemprop="priceCurrency" content="RUB" />
+            {% if product.old_price %}
+            <span class="old-price">{{ product.old_price | int }} ₽</span>
+            {% endif %}
+          </div>
+        </div>
+      </a>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<!-- Отзывы -->
+<section class="reviews-section">
+  <h2 class="section-title animate-fade-in">Отзывы покупателей</h2>
+  <div class="reviews-grid">
+    <div class="review-card animate-card" style="--delay: 0.1s">
+      <div class="review-stars">★★★★★</div>
+      <p class="review-text">
+        «Отличный магазин! Нашла идеальные зимние сапоги — тёплые, удобные и красивые. 
+        Продавец помогла подобрать размер, очень внимательное обслуживание.»
+      </p>
+      <div class="review-author">
+        <span class="author-name">Елена М.</span>
+        <span class="author-date">Декабрь 2024</span>
+      </div>
+    </div>
+    <div class="review-card animate-card" style="--delay: 0.2s">
+      <div class="review-stars">★★★★★</div>
+      <p class="review-text">
+        «Покупаю здесь уже третий год. Качество кожи отличное, обувь носится долго. 
+        Цены адекватные, особенно по акциям. Рекомендую!»
+      </p>
+      <div class="review-author">
+        <span class="author-name">Анна К.</span>
+        <span class="author-date">Ноябрь 2024</span>
+      </div>
+    </div>
+    <div class="review-card animate-card" style="--delay: 0.3s">
+      <div class="review-stars">★★★★★</div>
+      <p class="review-text">
+        «Большой выбор демисезонной обуви. Примерила несколько пар, 
+        консультант терпеливо ждала. Купила ботинки — очень довольна!»
+      </p>
+      <div class="review-author">
+        <span class="author-name">Марина С.</span>
+        <span class="author-date">Октябрь 2024</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Подбор по размеру -->
+<section class="size-picker-section">
+  <div class="size-picker-content">
+    <h2 class="section-title">Знаете свой размер?</h2>
+    <p>Выберите размер и посмотрите, что есть в наличии</p>
+    <div class="size-buttons">
+      <a href="/products?size=35" class="size-btn">35</a>
+      <a href="/products?size=36" class="size-btn">36</a>
+      <a href="/products?size=37" class="size-btn popular">37</a>
+      <a href="/products?size=38" class="size-btn popular">38</a>
+      <a href="/products?size=39" class="size-btn popular">39</a>
+      <a href="/products?size=40" class="size-btn">40</a>
+      <a href="/products?size=41" class="size-btn">41</a>
+      <a href="/products?size=42" class="size-btn">42</a>
+    </div>
+    <p class="size-hint">💡 Популярные размеры отмечены</p>
+  </div>
+</section>
+
+<!-- Сезонные советы -->
+<section class="tips-section">
+  <h2 class="section-title animate-fade-in">Полезные советы</h2>
+  <div class="tips-grid">
+    <div class="tip-card animate-card" style="--delay: 0.1s">
+      <div class="tip-icon">❄️</div>
+      <h3>Зимняя обувь</h3>
+      <p>Выбирайте модели с натуральным мехом внутри — нога будет в тепле до -25°C. 
+         Подошва должна быть рельефной для устойчивости на льду.</p>
+    </div>
+    <div class="tip-card animate-card" style="--delay: 0.2s">
+      <div class="tip-icon">🧴</div>
+      <h3>Уход за кожей</h3>
+      <p>Обрабатывайте обувь кремом раз в неделю. После прогулки под дождём — 
+         просушите при комнатной температуре, не у батареи.</p>
+    </div>
+    <div class="tip-card animate-card" style="--delay: 0.3s">
+      <div class="tip-icon">📏</div>
+      <h3>Как выбрать размер</h3>
+      <p>Примеряйте обувь во второй половине дня — к вечеру нога немного отекает. 
+         Для зимней обуви берите на полразмера больше.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Призыв к действию -->
+<section class="cta-section animate-fade-in">
+  <div class="cta-card">
+    <div class="cta-icon float-animation">👠</div>
+    <h2>Приходите на примерку!</h2>
+    <p>Мы поможем подобрать идеальную пару под ваш стиль и размер</p>
+    <div class="cta-buttons">
+      <a href="/map" class="cta-button pulse-on-hover">
+        <span>📍</span> Показать на карте
+      </a>
+      <a href="tel:+79028018513" class="cta-button cta-button-outline">
+        <span>📞</span> Позвонить
+      </a>
+    </div>
+    <p class="cta-hours">Работаем ежедневно с 10:00 до 21:00</p>
+  </div>
+</section>
+{% endblock %}

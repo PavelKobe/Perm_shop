@@ -1,66 +1,112 @@
 {% extends "base.html" %}
 
-{% block content %}
-  <nav class="breadcrumbs" aria-label="Хлебные крошки">
-    <ol itemscope itemtype="https://schema.org/BreadcrumbList">
-      {% for crumb in breadcrumbs %}
-        <li
-          itemprop="itemListElement"
-          itemscope
-          itemtype="https://schema.org/ListItem"
-        >
-          <a href="{{ crumb.url }}" itemprop="item">
-            <span itemprop="name">{{ crumb.name }}</span>
-          </a>
-          <meta itemprop="position" content="{{ loop.index }}" />
-        </li>
-      {% endfor %}
-    </ol>
-  </nav>
-
-  <article
-    class="product-detail"
-    itemscope
-    itemtype="https://schema.org/Product"
-  >
-    <header class="product-detail-header">
-      <h1 itemprop="name">{{ product.name }}</h1>
-    </header>
-
-    <div class="product-detail-body">
-      {% if product.image_url %}
-        <div class="product-detail-image">
-          <img
-            src="{{ product.image_url }}"
-            alt="{{ product.name }}"
-            itemprop="image"
-          />
-        </div>
-      {% endif %}
-
-      <div class="product-detail-info">
-        <div
-          class="product-detail-price"
-          itemprop="offers"
-          itemscope
-          itemtype="https://schema.org/Offer"
-        >
-          <span class="price" itemprop="price">{{ "%.0f"|format(product.price) }} ₽</span>
-          <meta itemprop="priceCurrency" content="RUB" />
-          {% if product.old_price %}
-            <span class="old-price">{{ "%.0f"|format(product.old_price) }} ₽</span>
-          {% endif %}
-          <link itemprop="availability" href="https://schema.org/InStock" />
-        </div>
-
-        {% if product.description %}
-          <div class="product-detail-description" itemprop="description">
-            {{ product.description }}
-          </div>
-        {% endif %}
-      </div>
-    </div>
-  </article>
+{% block head_extra %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": "{{ product.name }}",
+  "description": "{{ product.description or '' }}",
+  "image": "{{ request.base_url | replace('//', '//') | replace('/$', '') }}{{ product.image_url }}",
+  "sku": "{{ product.id }}",
+  "brand": {
+    "@type": "Brand",
+    "name": "Планета Обуви"
+  },
+  "offers": {
+    "@type": "Offer",
+    "url": "{{ request.url }}",
+    "price": "{{ product.price }}",
+    "priceCurrency": "RUB",
+    "availability": "https://schema.org/InStock",
+    "seller": {
+      "@type": "Organization",
+      "name": "Планета Обуви — ТЦ «Алмаз»"
+    }
+  }
+}
+</script>
 {% endblock %}
 
+{% block content %}
+<nav class="breadcrumbs" aria-label="Хлебные крошки">
+  <ol itemscope itemtype="https://schema.org/BreadcrumbList">
+    {% for bc in breadcrumbs %}
+    <li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+      {% if loop.last %}
+        <span itemprop="name">{{ bc.name }}</span>
+      {% else %}
+        <a href="{{ bc.url }}" itemprop="item"><span itemprop="name">{{ bc.name }}</span></a> /
+      {% endif %}
+      <meta itemprop="position" content="{{ loop.index }}" />
+    </li>
+    {% endfor %}
+  </ol>
+</nav>
 
+<article class="product-detail" itemscope itemtype="https://schema.org/Product">
+  <div class="product-detail-body">
+    {% if product.image_url %}
+    <div class="product-detail-image">
+      <img
+        src="{{ product.image_url }}"
+        alt="{{ product.name }}"
+        itemprop="image"
+      />
+      {% if product.is_new %}
+      <span class="product-badge product-badge-new product-badge-large">Новинка</span>
+      {% endif %}
+      {% if product.old_price %}
+      <span class="product-badge product-badge-sale product-badge-large">Скидка</span>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="product-detail-info">
+      <header class="product-detail-header">
+        <h1 itemprop="name">{{ product.name }}</h1>
+      </header>
+
+      <div class="product-detail-price" itemprop="offers" itemscope itemtype="https://schema.org/Offer">
+        <span class="price" itemprop="price" content="{{ product.price }}">{{ product.price | int }} ₽</span>
+        <meta itemprop="priceCurrency" content="RUB" />
+        {% if product.old_price %}
+        <span class="old-price">{{ product.old_price | int }} ₽</span>
+        <span class="discount-percent">-{{ ((1 - product.price / product.old_price) * 100) | int }}%</span>
+        {% endif %}
+        <link itemprop="availability" href="https://schema.org/InStock" />
+      </div>
+
+      {% if product.color %}
+      <div class="product-detail-attr">
+        <span class="attr-label">Цвет:</span>
+        <span class="attr-value">{{ product.color }}</span>
+      </div>
+      {% endif %}
+
+      {% if product.sizes_json %}
+      <div class="product-detail-attr">
+        <span class="attr-label">Размеры:</span>
+        <span class="attr-value sizes-list">
+          {% for size in product.sizes_json | parse_sizes %}
+          <span class="size-tag">{{ size }}</span>
+          {% endfor %}
+        </span>
+      </div>
+      {% endif %}
+
+      {% if product.description %}
+      <div class="product-detail-description" itemprop="description">
+        {{ product.description }}
+      </div>
+      {% endif %}
+
+      <div class="product-detail-cta">
+        <p>📍 Приходите на примерку!</p>
+        <p><strong>ТЦ «Алмаз»</strong>, ул. Куйбышева, 37, цокольный этаж</p>
+        <p>📞 <a href="tel:+79028018513">+7 (902) 801-85-13</a></p>
+      </div>
+    </div>
+  </div>
+</article>
+{% endblock %}

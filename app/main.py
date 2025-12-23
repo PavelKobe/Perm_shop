@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from typing import List
 
@@ -5,16 +6,16 @@ from fastapi import Depends, FastAPI, Request
 from fastapi.responses import HTMLResponse, PlainTextResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from .database import get_db, init_db
-from .models import Category, Product, Promotion
+from .models import Category, Subcategory, Product, Promotion
 from .seo import generate_sitemap_xml
 
 
 BASE_DIR = Path(__file__).resolve().parent
 
-app = FastAPI(title="Отдел женской кожаной обуви в ТЦ «Алмаз» в Перми")
+app = FastAPI(title="Женская кожаная обувь в Перми — ТЦ «Алмаз»")
 
 static_dir = BASE_DIR.parent / "static"
 templates_dir = BASE_DIR / "templates"
@@ -23,85 +24,191 @@ app.mount("/static", StaticFiles(directory=static_dir), name="static")
 templates = Jinja2Templates(directory=str(templates_dir))
 
 
+# Jinja2 фильтр для парсинга JSON размеров
+def parse_sizes(sizes_json: str | None) -> List[int]:
+    if not sizes_json:
+        return []
+    try:
+        return json.loads(sizes_json)
+    except (json.JSONDecodeError, TypeError):
+        return []
+
+
+templates.env.filters["parse_sizes"] = parse_sizes
+
+
 @app.on_event("startup")
 def on_startup() -> None:
     init_db()
 
 
+# =============================================================================
+# ГЛАВНАЯ
+# =============================================================================
 @app.get("/", response_class=HTMLResponse)
 def read_index(request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
-    categories = db.query(Category).all()
-    products = (
+    categories = (
+        db.query(Category)
+        .options(joinedload(Category.subcategories))
+        .order_by(Category.sort_order)
+        .all()
+    )
+
+    # Актуальные товары (is_featured) и новинки (is_new)
+    featured_products = (
         db.query(Product)
-        .filter(Product.is_active.is_(True))
+        .filter(Product.is_active.is_(True), Product.is_featured.is_(True))
         .order_by(Product.created_at.desc())
         .limit(8)
         .all()
     )
+
+    new_products = (
+        db.query(Product)
+        .filter(Product.is_active.is_(True), Product.is_new.is_(True))
+        .order_by(Product.created_at.desc())
+        .limit(4)
+        .all()
+    )
+
+    # Активные акции для баннера
+    promotions = (
+        db.query(Promotion)
+        .filter(Promotion.is_active.is_(True))
+        .order_by(Promotion.start_date.desc())
+        .limit(1)
+        .all()
+    )
+
     return templates.TemplateResponse(
         "index.html",
         {
             "request": request,
             "categories": categories,
-            "products": products,
-            "page_title": "Отдел женской кожаной обуви в ТЦ «Алмаз» в Перми",
+            "featured_products": featured_products,
+            "new_products": new_products,
+            "promotions": promotions,
+            "page_title": "Женская кожаная обувь в Перми — ТЦ «Алмаз»",
+            "meta_description": "Магазин женской кожаной обуви в Перми. Зимняя, демисезонная и летняя обувь из натуральной кожи. ТЦ «Алмаз», ул. Куйбышева, 37.",
         },
     )
 
 
+# =============================================================================
+# СТРАНИЦА КАТЕГОРИИ (список подгрупп)
+# =============================================================================
 @app.get("/category/{slug}", response_class=HTMLResponse)
 def read_category(slug: str, request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
-    category = db.query(Category).filter(Category.slug == slug).first()
+    category = (
+        db.query(Category)
+        .options(joinedload(Category.subcategories))
+        .filter(Category.slug == slug)
+        .first()
+    )
+
     if category is None:
+        categories = db.query(Category).options(joinedload(Category.subcategories)).order_by(Category.sort_order).all()
         return templates.TemplateResponse(
             "index.html",
             {
-            "request": request,
-            "categories": db.query(Category).all(),
-            "products": [],
-            "page_title": "Отдел женской кожаной обуви в ТЦ «Алмаз» в Перми",
+                "request": request,
+                "categories": categories,
+                "featured_products": [],
+                "new_products": [],
+                "page_title": "Категория не найдена — ТЦ «Алмаз»",
             },
             status_code=404,
         )
 
-    size = request.query_params.get("size")
-    color = request.query_params.get("color")
+    # Все категории для навигации
+    all_categories = db.query(Category).options(joinedload(Category.subcategories)).order_by(Category.sort_order).all()
 
-    query = (
-        db.query(Product)
-        .filter(Product.category_id == category.id, Product.is_active.is_(True))
-    )
-    if size:
-        query = query.filter(Product.size == size)
-    if color:
-        query = query.filter(Product.color == color)
-
-    products = query.order_by(Product.created_at.desc()).all()
-
-    # Список доступных значений для фильтров
-    available_sizes = sorted(
-        {p.size for p in db.query(Product).filter(Product.category_id == category.id, Product.is_active.is_(True)) if p.size}
-    )
-    available_colors = sorted(
-        {p.color for p in db.query(Product).filter(Product.category_id == category.id, Product.is_active.is_(True)) if p.color}
-    )
+    # Хлебные крошки
+    breadcrumbs = [
+        {"name": "Главная", "url": "/"},
+        {"name": category.name, "url": f"/category/{category.slug}"},
+    ]
 
     return templates.TemplateResponse(
         "category.html",
         {
             "request": request,
-            "categories": db.query(Category).all(),
+            "categories": all_categories,
             "category": category,
-            "products": products,
-            "active_size": size or "",
-            "active_color": color or "",
-            "available_sizes": available_sizes,
-            "available_colors": available_colors,
-            "page_title": f"{category.name} — отдел женской кожаной обуви в ТЦ «Алмаз» в Перми",
+            "breadcrumbs": breadcrumbs,
+            "page_title": f"{category.name} из кожи — купить в Перми | ТЦ «Алмаз»",
+            "meta_description": f"{category.name} из натуральной кожи в Перми. Большой выбор моделей в ТЦ «Алмаз». Примерка на месте.",
         },
     )
 
 
+# =============================================================================
+# СТРАНИЦА ПОДГРУППЫ (сетка товаров)
+# =============================================================================
+@app.get("/{category_slug}/{subcategory_slug}", response_class=HTMLResponse)
+def read_subcategory(
+    category_slug: str,
+    subcategory_slug: str,
+    request: Request,
+    db: Session = Depends(get_db),
+) -> HTMLResponse:
+    category = db.query(Category).filter(Category.slug == category_slug).first()
+    if category is None:
+        return _not_found_response(request, db)
+
+    subcategory = (
+        db.query(Subcategory)
+        .filter(Subcategory.category_id == category.id, Subcategory.slug == subcategory_slug)
+        .first()
+    )
+    if subcategory is None:
+        return _not_found_response(request, db)
+
+    # Все категории для навигации
+    all_categories = db.query(Category).options(joinedload(Category.subcategories)).order_by(Category.sort_order).all()
+
+    # Товары подгруппы
+    products = (
+        db.query(Product)
+        .filter(Product.subcategory_id == subcategory.id, Product.is_active.is_(True))
+        .order_by(Product.created_at.desc())
+        .all()
+    )
+
+    # Хлебные крошки
+    breadcrumbs = [
+        {"name": "Главная", "url": "/"},
+        {"name": category.name, "url": f"/category/{category.slug}"},
+        {"name": subcategory.name, "url": f"/{category.slug}/{subcategory.slug}"},
+    ]
+
+    # Формируем название для SEO
+    season_map = {
+        "zimnyaya": "Зимние",
+        "demisezon": "Демисезонные",
+        "letnyaya": "Летние",
+    }
+    season_prefix = season_map.get(category.slug, "")
+    seo_title = f"{season_prefix} {subcategory.name.lower()} из кожи — Пермь | ТЦ «Алмаз»"
+
+    return templates.TemplateResponse(
+        "subcategory.html",
+        {
+            "request": request,
+            "categories": all_categories,
+            "category": category,
+            "subcategory": subcategory,
+            "products": products,
+            "breadcrumbs": breadcrumbs,
+            "page_title": seo_title,
+            "meta_description": f"{season_prefix} {subcategory.name.lower()} из натуральной кожи. Купить в Перми, ТЦ «Алмаз». Примерка на месте.",
+        },
+    )
+
+
+# =============================================================================
+# СТРАНИЦА ТОВАРА
+# =============================================================================
 @app.get("/product/{product_id}-{slug}", response_class=HTMLResponse)
 def read_product(
     product_id: int,
@@ -111,110 +218,166 @@ def read_product(
 ) -> HTMLResponse:
     product = (
         db.query(Product)
+        .options(joinedload(Product.subcategory).joinedload(Subcategory.category))
         .filter(Product.id == product_id, Product.slug == slug, Product.is_active.is_(True))
         .first()
     )
-    if product is None:
-        return templates.TemplateResponse(
-            "index.html",
-            {
-            "request": request,
-            "categories": db.query(Category).all(),
-            "products": [],
-            "page_title": "Товар не найден — отдел женской кожаной обуви в ТЦ «Алмаз» в Перми",
-            },
-            status_code=404,
-        )
 
-    breadcrumbs = [
-        {"name": "Главная", "url": "/"},
-        {"name": product.category.name if product.category else "Каталог", "url": f"/category/{product.category.slug}" if product.category else "/"},
-        {"name": product.name, "url": f"/product/{product.id}-{product.slug}"},
-    ]
+    if product is None:
+        return _not_found_response(request, db)
+
+    # Все категории для навигации
+    all_categories = db.query(Category).options(joinedload(Category.subcategories)).order_by(Category.sort_order).all()
+
+    # Хлебные крошки
+    breadcrumbs = [{"name": "Главная", "url": "/"}]
+    if product.subcategory and product.subcategory.category:
+        cat = product.subcategory.category
+        subcat = product.subcategory
+        breadcrumbs.append({"name": cat.name, "url": f"/category/{cat.slug}"})
+        breadcrumbs.append({"name": subcat.name, "url": f"/{cat.slug}/{subcat.slug}"})
+    breadcrumbs.append({"name": product.name, "url": f"/product/{product.id}-{product.slug}"})
 
     return templates.TemplateResponse(
         "product.html",
         {
             "request": request,
+            "categories": all_categories,
             "product": product,
             "breadcrumbs": breadcrumbs,
-            "page_title": f"{product.name} — отдел женской кожаной обуви в ТЦ «Алмаз» в Перми",
+            "page_title": f"{product.name} — {int(product.price)} ₽ | ТЦ «Алмаз», Пермь",
+            "meta_description": product.description[:160] if product.description else f"{product.name} из натуральной кожи. Купить в Перми.",
         },
     )
 
 
-@app.get("/hx/products/{slug}", response_class=HTMLResponse)
-def hx_products_by_category(
-    slug: str,
-    request: Request,
-    db: Session = Depends(get_db),
-) -> HTMLResponse:
-    category = db.query(Category).filter(Category.slug == slug).first()
-    size = request.query_params.get("size")
-    color = request.query_params.get("color")
+# =============================================================================
+# АКЦИИ
+# =============================================================================
+@app.get("/promotions", response_class=HTMLResponse)
+def promotions_page(request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
+    all_categories = db.query(Category).options(joinedload(Category.subcategories)).order_by(Category.sort_order).all()
 
-    query = db.query(Product).filter(Product.is_active.is_(True))
-    if category:
-        query = query.filter(Product.category_id == category.id)
-    if size:
-        query = query.filter(Product.size == size)
-    if color:
-        query = query.filter(Product.color == color)
-
-    products = query.order_by(Product.created_at.desc()).all()
+    promotions: List[Promotion] = (
+        db.query(Promotion)
+        .filter(Promotion.is_active.is_(True))
+        .order_by(Promotion.created_at.desc())
+        .all()
+    )
 
     return templates.TemplateResponse(
-        "partials/product_list.html",
+        "promotions.html",
         {
             "request": request,
-            "products": products,
+            "categories": all_categories,
+            "promotions": promotions,
+            "page_title": "Акции и скидки — женская кожаная обувь | ТЦ «Алмаз», Пермь",
+            "meta_description": "Актуальные акции и скидки на женскую кожаную обувь в Перми. ТЦ «Алмаз».",
         },
     )
 
 
-@app.get("/hx/category/{slug}/filter", response_class=HTMLResponse)
-def hx_category_filter(
-    slug: str,
+# =============================================================================
+# КАРТА
+# =============================================================================
+@app.get("/map", response_class=HTMLResponse)
+def map_page(request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
+    all_categories = db.query(Category).options(joinedload(Category.subcategories)).order_by(Category.sort_order).all()
+
+    return templates.TemplateResponse(
+        "map.html",
+        {
+            "request": request,
+            "categories": all_categories,
+            "page_title": "Как нас найти — ТЦ «Алмаз», Куйбышева 37, Пермь",
+            "meta_description": "Адрес магазина женской кожаной обуви в Перми: ТЦ «Алмаз», ул. Куйбышева, 37, цокольный этаж. Карта проезда.",
+        },
+    )
+
+
+# =============================================================================
+# HTMX: ТОВАРЫ ПО ПОДГРУППЕ
+# =============================================================================
+@app.get("/hx/products/{subcategory_slug}", response_class=HTMLResponse)
+def hx_products_by_subcategory(
+    subcategory_slug: str,
     request: Request,
     db: Session = Depends(get_db),
 ) -> HTMLResponse:
-    category = db.query(Category).filter(Category.slug == slug).first()
-    if category is None:
-        products: list[Product] = []
-    else:
-        size = request.query_params.get("size")
-        color = request.query_params.get("color")
+    subcategory = db.query(Subcategory).filter(Subcategory.slug == subcategory_slug).first()
 
-        query = db.query(Product).filter(
-            Product.category_id == category.id,
-            Product.is_active.is_(True),
+    if subcategory:
+        products = (
+            db.query(Product)
+            .filter(Product.subcategory_id == subcategory.id, Product.is_active.is_(True))
+            .order_by(Product.created_at.desc())
+            .all()
         )
-        if size:
-            query = query.filter(Product.size == size)
-        if color:
-            query = query.filter(Product.color == color)
-
-        products = query.order_by(Product.created_at.desc()).all()
+    else:
+        products = []
 
     return templates.TemplateResponse(
         "partials/product_list.html",
-        {
-            "request": request,
-            "products": products,
-        },
+        {"request": request, "products": products},
     )
 
 
+@app.get("/hx/products/featured", response_class=HTMLResponse)
+def hx_featured_products(request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
+    products = (
+        db.query(Product)
+        .filter(Product.is_active.is_(True), Product.is_featured.is_(True))
+        .order_by(Product.created_at.desc())
+        .limit(8)
+        .all()
+    )
+    return templates.TemplateResponse(
+        "partials/product_list.html",
+        {"request": request, "products": products},
+    )
+
+
+@app.get("/hx/products/new", response_class=HTMLResponse)
+def hx_new_products(request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
+    products = (
+        db.query(Product)
+        .filter(Product.is_active.is_(True), Product.is_new.is_(True))
+        .order_by(Product.created_at.desc())
+        .limit(8)
+        .all()
+    )
+    return templates.TemplateResponse(
+        "partials/product_list.html",
+        {"request": request, "products": products},
+    )
+
+
+@app.get("/hx/products/sale", response_class=HTMLResponse)
+def hx_sale_products(request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
+    products = (
+        db.query(Product)
+        .filter(Product.is_active.is_(True), Product.old_price.isnot(None))
+        .order_by(Product.created_at.desc())
+        .limit(8)
+        .all()
+    )
+    return templates.TemplateResponse(
+        "partials/product_list.html",
+        {"request": request, "products": products},
+    )
+
+
+# =============================================================================
+# SEO: ROBOTS.TXT, SITEMAP.XML
+# =============================================================================
 @app.get("/robots.txt", response_class=PlainTextResponse)
 def robots_txt(request: Request) -> str:
     base_url = str(request.base_url).rstrip("/")
-    return "\n".join(
-        [
-            "User-agent: *",
-            "Allow: /",
-            f"Sitemap: {base_url}/sitemap.xml",
-        ]
-    )
+    return "\n".join([
+        "User-agent: *",
+        "Allow: /",
+        f"Sitemap: {base_url}/sitemap.xml",
+    ])
 
 
 @app.get("/sitemap.xml")
@@ -223,66 +386,19 @@ def sitemap_xml(request: Request, db: Session = Depends(get_db)) -> Response:
     return Response(content=xml_body, media_type="application/xml")
 
 
-@app.get("/products", response_class=HTMLResponse)
-def products_page(request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
-    winter_category = db.query(Category).filter(Category.slug == "zhenskaya-zimnyaya-obuv").first()
-    demiseason_category = db.query(Category).filter(Category.slug == "zhenskaya-demisezonnyaya-obuv").first()
-
-    winter_products: List[Product] = []
-    demiseason_products: List[Product] = []
-
-    if winter_category:
-        winter_products = (
-            db.query(Product)
-            .filter(Product.category_id == winter_category.id, Product.is_active.is_(True))
-            .order_by(Product.created_at.desc())
-            .all()
-        )
-    if demiseason_category:
-        demiseason_products = (
-            db.query(Product)
-            .filter(Product.category_id == demiseason_category.id, Product.is_active.is_(True))
-            .order_by(Product.created_at.desc())
-            .all()
-        )
-
+# =============================================================================
+# ВСПОМОГАТЕЛЬНЫЕ
+# =============================================================================
+def _not_found_response(request: Request, db: Session) -> HTMLResponse:
+    categories = db.query(Category).options(joinedload(Category.subcategories)).order_by(Category.sort_order).all()
     return templates.TemplateResponse(
-        "products.html",
+        "index.html",
         {
             "request": request,
-            "winter_products": winter_products,
-            "demiseason_products": demiseason_products,
-            "page_title": "Женская кожаная обувь — зимняя и демисезонная",
+            "categories": categories,
+            "featured_products": [],
+            "new_products": [],
+            "page_title": "Страница не найдена — ТЦ «Алмаз»",
         },
+        status_code=404,
     )
-
-
-@app.get("/promotions", response_class=HTMLResponse)
-def promotions_page(request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
-    promotions: List[Promotion] = (
-        db.query(Promotion)
-        .filter(Promotion.is_active.is_(True))
-        .order_by(Promotion.created_at.desc())
-        .all()
-    )
-    return templates.TemplateResponse(
-        "promotions.html",
-        {
-            "request": request,
-            "promotions": promotions,
-            "page_title": "Акции отдела женской обуви в ТЦ «Алмаз»",
-        },
-    )
-
-
-@app.get("/map", response_class=HTMLResponse)
-def map_page(request: Request) -> HTMLResponse:
-    return templates.TemplateResponse(
-        "map.html",
-        {
-            "request": request,
-            "page_title": "Как нас найти — Планета Обуви в ТЦ «Алмаз», Пермь",
-        },
-    )
-
-

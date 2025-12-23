@@ -1,280 +1,297 @@
-# Отдел женской кожаной обуви в ТЦ «Алмаз» (сайт‑визитка)
+# Женская кожаная обувь — ТЦ «Алмаз», Пермь
 
-Серверный рендер на FastAPI + Jinja2 + SQLite. Страницы:
-- Главная `/`
-- Товары `/products`
-- Акции `/promotions`
-- Карта `/map`
-- Карточка товара `/product/{id}-{slug}`
+Сайт-визитка магазина женской кожаной обуви «Планета Обуви».
 
-БД: `instance/shop.db` (SQLite).
+**Технологии:** FastAPI + Jinja2 + HTMX + SQLite
 
 ---
 
-## 1. Установка и запуск
+## 1. Быстрый старт
 
+```powershell
 cd C:\Users\p.kobelev\Perm_ecom\shoe_store_perm
 python -m venv .venv
 .\.venv\Scripts\activate
-pip install -r requirements.txtИнициализация (сидинг выполняется автоматически при старте, отдельный `init_db.py` не нужен).
+pip install -r requirements.txt
+```
 
 ### Запуск сервера
 
-Рекомендуемый способ — через батник:
+```powershell
+# Через батник (рекомендуется):
+run_dev.bat
 
-run_dev.batОн:
-- активирует `.venv`,
-- при необходимости ставит зависимости,
-- запускает `uvicorn app.main:app --reload --port 8002`,
-- открывает `http://127.0.0.1:8002/`.
-
-Ручной запуск:
-
+# Или вручную:
 .\.venv\Scripts\activate
-uvicorn app.main:app --reload --port 8002---
+uvicorn app.main:app --reload --port 8002
+```
 
-## 2. Где хранится что
-
-- **Бэкенд**: `app/main.py`, `app/database.py`, `app/models.py`, `app/seo.py`
-- **Шаблоны**: `app/templates/`
-  - `base.html` — общий layout и меню
-  - `index.html` — главная
-  - `products.html` — список товаров (зима/демисезон)
-  - `promotions.html` — акции
-  - `map.html` — карта + контакты (LocalBusiness)
-  - `product.html` — карточка товара
-  - `partials/product_list.html` — сетка карточек для списков
-- **Статика**:
-  - `static/style.css` — стили
-  - `static/images/products/` — фото товаров
-- **База**:
-  - `instance/shop.db` — SQLite
-  - схема и сидинг — `app/database.py`
-  - модели — `app/models.py`
+Открыть: http://127.0.0.1:8002/
 
 ---
 
-## 3. Как добавить новый товар
+## 2. Структура проекта
 
-### 3.1. Структура модели `Product`
+```
+shoe_store_perm/
+├── app/
+│   ├── main.py              # роуты FastAPI
+│   ├── models.py            # SQLAlchemy модели
+│   ├── database.py          # engine, seed_data
+│   ├── seo.py               # sitemap.xml
+│   └── templates/
+│       ├── base.html        # layout, навигация, footer
+│       ├── index.html       # главная
+│       ├── category.html    # страница категории (подгруппы)
+│       ├── subcategory.html # страница подгруппы (товары)
+│       ├── product.html     # карточка товара
+│       ├── promotions.html  # акции
+│       ├── map.html         # карта + контакты
+│       └── partials/
+│           └── product_list.html
+├── static/
+│   ├── style.css
+│   └── images/
+│       ├── shop/            # фото магазина
+│       └── products/        # фото товаров (по категориям)
+│           ├── zimnyaya/
+│           │   ├── sapogi/
+│           │   ├── botinki/
+│           │   ├── krossovki/
+│           │   └── uggi/
+│           ├── demisezon/
+│           │   ├── sapogi/
+│           │   ├── botinki/
+│           │   └── krossovki/
+│           └── letnyaya/
+│               ├── tufli/
+│               ├── krossovki/
+│               ├── lofery/
+│               ├── bosonozhki/
+│               └── mokasiny/
+└── instance/
+    └── shop.db              # SQLite база
+```
 
-`app/models.py`:
+---
+
+## 3. Структура базы данных
+
+### Таблицы
+
+| Таблица | Описание |
+|---------|----------|
+| `categories` | Основные категории: Зимняя, Демисезонная, Летняя |
+| `subcategories` | Подгруппы: Сапоги, Ботинки, Угги, Туфли и т.д. |
+| `products` | Товары |
+| `promotions` | Акции |
+
+### Модели (app/models.py)
+
+```python
+class Category(Base):
+    id: int (PK)
+    name: str              # "Зимняя обувь"
+    slug: str              # "zimnyaya"
+    icon: str              # "❄️"
+    sort_order: int
+
+class Subcategory(Base):
+    id: int (PK)
+    category_id: int (FK)  # → categories.id
+    name: str              # "Сапоги"
+    slug: str              # "sapogi"
+    sort_order: int
 
 class Product(Base):
-    __tablename__ = "products"
+    id: int (PK)
+    subcategory_id: int (FK)  # → subcategories.id
+    name: str
+    slug: str
+    description: text
+    price: float
+    old_price: float (nullable)
+    sizes_json: str        # JSON: "[36, 37, 38, 39]"
+    color: str
+    image_url: str         # "/static/images/products/zimnyaya/sapogi/file.jpg"
+    is_active: bool
+    is_new: bool           # новинка
+    is_featured: bool      # актуальный товар
+    created_at: datetime
+```
 
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(255), nullable=False)
-    slug = Column(String(255), nullable=False, index=True)
-    description = Column(Text, nullable=True)
-    price = Column(Float, nullable=False)
-    old_price = Column(Float, nullable=True)
-    is_active = Column(Boolean, default=True, nullable=False)
-    size = Column(String(32), nullable=True)
-    color = Column(String(64), nullable=True)
-    image_url = Column(String(512), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+### Категории и подгруппы
 
-    category_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
-    category = relationship("Category", back_populates="products")`Category.slug` важные значения:
-- `zhenskaya-zimnyaya-obuv` — зимняя женская обувь
-- `zhenskaya-demisezonnyaya-obuv` — демисезонная женская обувь
-- `obuv-so-skidkoy` — обувь со скидкой
-- `novinki` — новинки
-
-### 3.2. Добавление товара через Python-скрипт
-
-Создай, например, `scripts/add_product.py` (или разово используй `python -i`):
-
-from app.database import SessionLocal
-from app.models import Product, Category
-
-db = SessionLocal()
-
-winter = db.query(Category).filter(Category.slug == "zhenskaya-zimnyaya-obuv").first()
-
-product = Product(
-    name="Новые зимние ботинки «Snow Line»",
-    slug="novye-zimnie-botinki-snow-line",
-    description="Зимние ботинки из натуральной кожи с мягким мехом.",
-    price=9900,
-    old_price=11900,
-    size="38",
-    color="черный",
-    image_url="/static/images/products/novye-zimnie-botinki-snow-line.jpg",
-    category_id=winter.id if winter else None,
-)
-
-db.add(product)
-db.commit()
-db.refresh(product)
-print(product.id)
-db.close()Запуск:
-
-.\.venv\Scripts\activate
-python -i
->>> from scripts.add_product import *  # или просто скопировать код в интерактивПосле этого:
-- товар появится на `/products` в соответствующем блоке,
-- карточка откроется по `/product/{id}-{slug}` (id тот, что вывел `print`).
-
-### 3.3. Добавление товара через любой SQLite-клиент
-
-1. Открой `instance/shop.db` в:
-   - DBeaver / SQLite Browser / DataGrip / VSCode SQLite расширение.
-2. В таблице `categories` посмотри `id` нужной категории (зима/демисезон/скидки/новинки).
-3. Вставь строку в `products`:
-   - `name`, `slug`, `description`, `price`, `old_price` (опционально),
-   - `size`, `color` (опционально),
-   - `image_url` — строка вида `/static/images/products/<имя_файла>.jpg`,
-   - `is_active` = 1,
-   - `category_id` = `id` из `categories`.
+| Категория (slug) | Подгруппы |
+|------------------|-----------|
+| zimnyaya | sapogi, botinki, krossovki, uggi |
+| demisezon | sapogi, botinki, krossovki |
+| letnyaya | tufli, krossovki, lofery, bosonozhki, mokasiny |
 
 ---
 
-## 4. Как добавить фото товара
+## 4. Роуты
 
-1. Подготовь JPG/PNG (желательно 3:4 или 4:5, чтобы красиво влезло).
-2. Класть фото удобнее по блокам/категориям в `static/images/products/`:
+| URL | Описание |
+|-----|----------|
+| `/` | Главная страница |
+| `/category/{slug}` | Страница категории (zimnyaya, demisezon, letnyaya) |
+| `/{category_slug}/{subcategory_slug}` | Страница подгруппы с товарами |
+| `/product/{id}-{slug}` | Карточка товара |
+| `/promotions` | Акции |
+| `/map` | Карта и контакты |
+| `/sitemap.xml` | SEO sitemap |
+| `/robots.txt` | SEO robots |
 
-   - `static/images/products/zimnyaya/` — зимняя женская обувь (`zhenskaya-zimnyaya-obuv`)
-   - `static/images/products/demisezon/` — демисезонная обувь (`zhenskaya-demisezonnyaya-obuv`)
-   - `static/images/products/skidki/` — обувь со скидкой (`obuv-so-skidkoy`)
-   - `static/images/products/novinki/` — новинки (`novinki`)
+### Примеры URL
 
-3. В `image_url` у товара укажи полный путь, который будет отдаваться как есть:
-
-   `/static/images/products/<подпапка>/<имя_файла>.jpg`
-
-   Например:
-
-   `image_url="/static/images/products/zimnyaya/zimnie-botinki-oslo.jpg"`
-
-Карточки:
-- На странице `/products`: берется `product.image_url` и кладётся в `<img src="{{ product.image_url }}">`.
-- На странице товара `/product/{id}-{slug}` — то же самое.
+- `/category/zimnyaya` — все подгруппы зимней обуви
+- `/zimnyaya/sapogi` — зимние сапоги
+- `/letnyaya/bosonozhki` — летние босоножки
+- `/product/5-kozhanye-sapogi-frost-queen` — карточка товара
 
 ---
 
-## 5. Как добавить/изменить координаты и данные магазина (страница «Карта»)
+## 5. Как добавить товар
 
-Страница `Карта`: `app/templates/map.html`.
+### 5.1. Через Python
 
-Там уже есть микроразметка `LocalBusiness`:
+```python
+from app.database import db_session
+from app.models import Product, Subcategory
 
-<section
-  class="section"
-  itemscope
-  itemtype="https://schema.org/LocalBusiness"
->
-  <h1 itemprop="name">Отдел женской кожаной обуви в ТЦ «Алмаз»</h1>
-  <p itemprop="description">
-    Отдел по продаже женской кожаной обуви в торговом центре «Алмаз» в Перми. Зимняя и демисезонная обувь из
-    натуральной кожи.
-  </p>
+with db_session() as db:
+    # Найти подкатегорию
+    subcat = db.query(Subcategory).filter(
+        Subcategory.slug == "sapogi",
+        Subcategory.category.has(slug="zimnyaya")
+    ).first()
 
-  <div class="contact-grid">
-    <div class="contact-info">
-      <h2>Контакты</h2>
-      <p>
-        <span itemprop="address" itemscope itemtype="https://schema.org/PostalAddress">
-          <span itemprop="addressLocality">г. Пермь</span>,
-          <span itemprop="streetAddress">ул. Ленина, ТЦ «Алмаз»</span>
-        </span>
-      </p>
-      <p>
-        Телефон:
-        <a href="tel:+73422000000" itemprop="telephone">+7 (342) 200-00-00</a>
-      </p>
-      <p>
-        Часы работы:
-        <span itemprop="openingHours" content="Mo-Su 10:00-21:00">ежедневно 10:00–21:00</span>
-      </p>
-    </div>
+    # Создать товар
+    product = Product(
+        name="Новые зимние сапоги «Winter Star»",
+        slug="novye-zimnie-sapogi-winter-star",
+        description="Элегантные сапоги из натуральной кожи.",
+        price=12500,
+        old_price=14900,  # опционально
+        sizes_json='[36, 37, 38, 39]',
+        color="чёрный",
+        image_url="/static/images/products/zimnyaya/sapogi/winter-star.jpg",
+        subcategory_id=subcat.id,
+        is_new=True,       # новинка
+        is_featured=True,  # показывать на главной
+    )
+    db.add(product)
+    db.commit()
+    print(f"Товар #{product.id} создан")
+```
 
-    <div class="map-wrapper" itemprop="geo" itemscope itemtype="https://schema.org/GeoCoordinates">
-      <meta itemprop="latitude" content="57.948015" />
-      <meta itemprop="longitude" content="56.234821" />
-      <div class="map-embed">
-        <iframe
-          src="https://yandex.ru/map-widget/v1/?ll=56.235221%2C58.007726&z=17&l=map&pt=56.235221%2C58.007726%2Cpm2rdm"
-          width="100%"
-          height="320"
-          frameborder="0"
-          loading="lazy"
-        ></iframe>
-      </div>
-    </div>
-  </div>
-</section>### 5.1. Меняем адрес
+### 5.2. Через SQLite-клиент
 
-Редактируй текст внутри `streetAddress` и `addressLocality`:
-- `г. Пермь` → другой город (если нужно),
-- `ул. Ленина, ТЦ «Алмаз»` → твой фактический адрес/этаж/секция.
-
-### 5.2. Обновляем телефон
-
-В `href` и `itemprop="telephone"`:
-
-<a href="tel:+7XXXXXXXXXX" itemprop="telephone">+7 (...) ...-..-..</a>### 5.3. Меняем часы работы
-
-- Машинно-читаемый формат в `content`:
-  - Примеры: `Mo-Fr 10:00-20:00`, `Mo-Su 10:00-21:00`.
-- Человеческий текст — внутри тега.
+1. Открыть `instance/shop.db` в DBeaver / SQLite Browser
+2. Найти `subcategory_id` нужной подгруппы
+3. Вставить строку в `products`:
+   - `name`, `slug`, `description`, `price`
+   - `sizes_json` — JSON массив: `"[36, 37, 38]"`
+   - `image_url` — путь к фото
+   - `subcategory_id` — FK
+   - `is_active = 1`
 
 ---
 
-## 6. Как поменять карту и координаты
+## 6. Как добавить фото товара
 
-1. Зайди в конструктор Яндекс.Карт.
-2. Найди адрес «г. Пермь, ул. Ленина, 50» или свой реальный.
-3. Сгенерируй iframe-код.
-4. Замени `src` внутри `<iframe>` в `map.html` на выданный Яндексом.
+1. Положить файл в соответствующую папку:
 
-Координаты (для микроразметки):
+```
+static/images/products/{category_slug}/{subcategory_slug}/{filename}.jpg
+```
 
-<meta itemprop="latitude" content="58.0105" />
-<meta itemprop="longitude" content="56.2502" />- Поменяй на фактические (их можно посмотреть в Яндекс.Картах — ПКМ по точке → «Что здесь?» и взять широту/долготу).
+Пример: `static/images/products/zimnyaya/sapogi/winter-star.jpg`
+
+2. В БД указать путь:
+
+```
+/static/images/products/zimnyaya/sapogi/winter-star.jpg
+```
+
+### Рекомендации по фото
+
+- Формат: JPG или PNG
+- Соотношение: 1:1 (квадрат) — лучше всего для карточек
+- Размер: 800×800 px минимум
+- Фон: светлый, нейтральный
 
 ---
 
-## 7. Фото отдела / обложка на главной
+## 7. SEO
 
-Сейчас на главной (`index.html` и `products.html`) в блоке `.hero-photo` просто:
+### Meta-теги
 
-<div class="hero-photo">
-  <div class="hero-photo-placeholder"></div>
-</div>Чтобы показать реальное фото отдела:
+На каждой странице уникальные `<title>` и `<meta description>` с ключевыми словами:
+- «Пермь»
+- «кожаная обувь»
+- «женская обувь»
+- «ТЦ Алмаз»
 
-1. Положи фото, например:
+### Микроразметка Schema.org
 
-static/images/shop/front.jpg2. В `index.html` (и при желании в `products.html`) замени `hero-photo-placeholder` на `<img>`:
+- `LocalBusiness` — на всех страницах (footer)
+- `Product` — на странице товара
+- `BreadcrumbList` — хлебные крошки
+- `ItemList` — списки товаров
 
-<div class="hero-photo">
-  <img
-    src="/static/images/shop/front.jpg"
-    alt="Отдел женской кожаной обуви в ТЦ «Алмаз»"
-    class="hero-photo-img"
-  />
-</div>3. Добавь немного стилей в `static/style.css`, если хочешь:
+### sitemap.xml
 
-.hero-photo-img {
-  width: 100%;
-  border-radius: 16px;
-  object-fit: cover;
-}---
+Автоматически генерируется со всеми:
+- категориями
+- подгруппами
+- товарами
+- статическими страницами
 
-## 8. FAQ по изменениям
+Проверить: http://127.0.0.1:8002/sitemap.xml
 
-- **Товар не появился на `/products`**:
-  - проверь `is_active = 1`,
-  - `category_id` должен ссылаться на одну из категорий (зима/демисезон/скидка/новинки),
-  - перезапусти `uvicorn` (на dev он и так подхватывает изменения, но для БД не нужно — сразу видно).
-- **Картинка не показывается**:
-  - путь в БД должен начинаться с `/static/...`,
-  - файл физически лежит в `static/images/products/`,
-  - проверь регистр имени файла (Windows не чувствителен, но лучше единообразно).
-- **Карта не обновилась**:
-  - проверь, что `src` iframe реально ведёт на Яндекс, без дополнительных экранирований,
-  - иногда кэш — попробуй в инкогнито.
+---
 
-Этого достаточно, чтобы без админки и API руками поддерживать сайт‑визитку: добавлять/править товары, фото и координаты/карту.
+## 8. Контакты магазина
+
+Данные настраиваются в `app/templates/base.html` (footer) и `app/templates/map.html`:
+
+- **Адрес:** г. Пермь, ул. Куйбышева, 37, ТЦ «Алмаз», цокольный этаж
+- **Телефон:** +7 (902) 801-85-13
+- **Часы работы:** ежедневно 10:00–21:00
+- **Координаты:** 58.007726, 56.235221
+
+---
+
+## 9. Чистый старт БД
+
+Если нужно пересоздать базу с нуля:
+
+```python
+from app.database import init_db
+
+# Удалить старую БД и создать новую с seed-данными
+init_db(force_recreate=True)
+```
+
+Или просто удалить файл `instance/shop.db` и перезапустить сервер.
+
+---
+
+## 10. FAQ
+
+**Товар не появляется на сайте:**
+- Проверь `is_active = 1` (True)
+- Проверь `subcategory_id` — должен ссылаться на существующую подкатегорию
+
+**Картинка не отображается:**
+- Путь должен начинаться с `/static/...`
+- Файл должен лежать в правильной папке
+- Проверь регистр имени файла
+
+**Товар не на главной в «Актуальных»:**
+- Установи `is_featured = True`
+
+**Товар не помечен как новинка:**
+- Установи `is_new = True`

@@ -1,32 +1,41 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <section class="section">
-    <h1>Акции отдела женской обуви</h1>
-    <p class="section-subtitle">
-      Специальные предложения и сезонные скидки в отделе женской кожаной обуви ТЦ «Алмаз».
-    </p>
-  </section>
+<nav class="breadcrumbs" aria-label="Хлебные крошки">
+  <ol>
+    <li><a href="/">Главная</a> /</li>
+    <li>Акции</li>
+  </ol>
+</nav>
 
-  <section class="section">
-    {% if promotions %}
-      <div class="promo-list">
-        {% for promo in promotions %}
-          <article class="promo-card">
-            <h2>{{ promo.title }}</h2>
-            {% if promo.discount_text %}
-              <p class="promo-highlight">{{ promo.discount_text }}</p>
-            {% endif %}
-            {% if promo.description %}
-              <p>{{ promo.description }}</p>
-            {% endif %}
-          </article>
-        {% endfor %}
+<section class="promotions-page">
+  <h1>🔥 Акции и скидки</h1>
+  <p class="section-subtitle">
+    Специальные предложения на женскую кожаную обувь в ТЦ «Алмаз», Пермь.
+  </p>
+
+  {% if promotions %}
+  <div class="promo-grid">
+    {% for promo in promotions %}
+    <article class="promo-card">
+      <div class="promo-card-header">
+        {% if promo.discount_text %}
+        <span class="promo-badge">{{ promo.discount_text }}</span>
+        {% endif %}
+        <h2>{{ promo.title }}</h2>
       </div>
-    {% else %}
-      <p>Сейчас активных акций нет.</p>
-    {% endif %}
-  </section>
+      {% if promo.description %}
+      <p class="promo-description">{{ promo.description }}</p>
+      {% endif %}
+      <div class="promo-cta">
+        <p>📍 ТЦ «Алмаз», ул. Куйбышева, 37</p>
+        <p>📞 <a href="tel:+79028018513">+7 (902) 801-85-13</a></p>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="product-empty">Сейчас активных акций нет. Следите за обновлениями!</p>
+  {% endif %}
+</section>
 {% endblock %}
-
-
