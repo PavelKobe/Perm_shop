@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Вход в админку — Планета Обуви</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='/admin.css') }}">
+</head>
+<body class="login-page">
+  <div class="login-container">
+    <div class="login-card">
+      <div class="login-header">
+        <span class="login-logo">👠</span>
+        <h1>Планета Обуви</h1>
+        <p>Вход в панель управления</p>
+      </div>
+      
+      {% if error %}
+      <div class="alert alert-error">
+        {{ error }}
+      </div>
+      {% endif %}
+      
+      <form method="post" action="/admin/login" class="login-form">
+        <div class="form-group">
+          <label for="username">Логин</label>
+          <input 
+            type="text" 
+            id="username" 
+            name="username" 
+            required 
+            autocomplete="username"
+            autofocus
+          >
+        </div>
+        
+        <div class="form-group">
+          <label for="password">Пароль</label>
+          <input 
+            type="password" 
+            id="password" 
+            name="password" 
+            required 
+            autocomplete="current-password"
+          >
+        </div>
+        
+        <button type="submit" class="btn btn-primary btn-block">
+          Войти
+        </button>
+      </form>
+      
+      <div class="login-footer">
+        <a href="/">← Вернуться на сайт</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+

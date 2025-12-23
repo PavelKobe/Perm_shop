@@ -1,0 +1,248 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{{ form_title }}{% endblock %}
+{% block page_title %}{{ form_title }}{% endblock %}
+
+{% block header_actions %}
+<a href="/admin/products" class="btn btn-outline">← Назад к списку</a>
+{% endblock %}
+
+{% block content %}
+<div class="form-page">
+  <form method="post" action="{{ form_action }}" enctype="multipart/form-data" class="product-form">
+    <div class="form-grid">
+      <!-- Левая колонка -->
+      <div class="form-column">
+        <div class="form-card">
+          <h3>Основная информация</h3>
+          
+          <div class="form-group">
+            <label for="name">Название товара <span class="required">*</span></label>
+            <input 
+              type="text" 
+              id="name" 
+              name="name" 
+              required 
+              value="{{ product.name if product else '' }}"
+              placeholder="Например: Зимние кожаные сапоги"
+            >
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="category_id">Категория <span class="required">*</span></label>
+              <select id="category_id" name="category_id" required onchange="loadSubcategories(this.value, 'subcategory_id', '{{ product.subcategory_id if product else '' }}')">
+                <option value="">Выберите категорию</option>
+                {% for cat in categories %}
+                <option 
+                  value="{{ cat.id }}" 
+                  {% if product and product.subcategory and product.subcategory.category_id == cat.id %}selected{% endif %}
+                >
+                  {{ cat.icon }} {{ cat.name }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label for="subcategory_id">Подкатегория <span class="required">*</span></label>
+              <select id="subcategory_id" name="subcategory_id" required>
+                <option value="">Сначала выберите категорию</option>
+                {% if product and product.subcategory %}
+                  {% for cat in categories if product.subcategory.category_id == cat.id %}
+                    {% for subcat in cat.subcategories %}
+                    <option value="{{ subcat.id }}" {% if product.subcategory_id == subcat.id %}selected{% endif %}>
+                      {{ subcat.name }}
+                    </option>
+                    {% endfor %}
+                  {% endfor %}
+                {% endif %}
+              </select>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="description">Описание</label>
+            <textarea 
+              id="description" 
+              name="description" 
+              rows="4"
+              placeholder="Подробное описание товара"
+            >{{ product.description if product and product.description else '' }}</textarea>
+          </div>
+        </div>
+        
+        <div class="form-card">
+          <h3>Цена</h3>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="price">Цена (₽) <span class="required">*</span></label>
+              <input 
+                type="number" 
+                id="price" 
+                name="price" 
+                required 
+                min="0" 
+                step="1"
+                value="{{ product.price | int if product else '' }}"
+                placeholder="0"
+              >
+            </div>
+            
+            <div class="form-group">
+              <label for="old_price">Старая цена (₽)</label>
+              <input 
+                type="number" 
+                id="old_price" 
+                name="old_price" 
+                min="0" 
+                step="1"
+                value="{{ product.old_price | int if product and product.old_price else '' }}"
+                placeholder="Если есть скидка"
+              >
+              <small class="form-hint">Если указана и больше текущей — товар попадёт в «Скидки»</small>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-card">
+          <h3>Характеристики</h3>
+          
+          <div class="form-group">
+            <label>Размеры</label>
+            <div class="sizes-grid">
+              {% set current_sizes = [] %}
+              {% if product and product.sizes_json %}
+                {% set current_sizes = product.sizes_json | from_json %}
+              {% endif %}
+              {% for size in range(34, 43) %}
+              <label class="size-checkbox">
+                <input 
+                  type="checkbox" 
+                  name="sizes" 
+                  value="{{ size }}"
+                  {% if size in current_sizes %}checked{% endif %}
+                >
+                <span>{{ size }}</span>
+              </label>
+              {% endfor %}
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="color">Цвет</label>
+            <input 
+              type="text" 
+              id="color" 
+              name="color" 
+              value="{{ product.color if product and product.color else '' }}"
+              placeholder="Например: Чёрный, Коричневый"
+            >
+          </div>
+        </div>
+      </div>
+      
+      <!-- Правая колонка -->
+      <div class="form-column">
+        <div class="form-card">
+          <h3>Фотография</h3>
+          
+          {% if has_image %}
+          <div class="current-image">
+            <img src="{{ product.image_url }}" alt="{{ product.name }}">
+            <p class="image-hint">Текущее фото. Загрузите новое, чтобы заменить.</p>
+          </div>
+          {% elif product and product.image_url %}
+          <div class="missing-image">
+            <span class="missing-icon">⚠️</span>
+            <p>Файл изображения не найден: <code>{{ product.image_url }}</code></p>
+            <p class="image-hint">Загрузите новое фото.</p>
+          </div>
+          {% endif %}
+          
+          <div class="form-group">
+            <label for="image">{% if has_image %}Заменить фото{% else %}Загрузить фото{% endif %}</label>
+            <input 
+              type="file" 
+              id="image" 
+              name="image" 
+              accept="image/jpeg,image/png,image/webp"
+            >
+            <small class="form-hint">JPG, PNG или WebP. Рекомендуемый размер: 800×800 px</small>
+          </div>
+        </div>
+        
+        <div class="form-card">
+          <h3>Отображение</h3>
+          
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input 
+                type="checkbox" 
+                name="is_new" 
+                value="true"
+                {% if product and product.is_new %}checked{% endif %}
+              >
+              <span class="checkmark"></span>
+              <span>Новинка</span>
+            </label>
+            <small class="form-hint">Товар появится в разделе «Новинки»</small>
+          </div>
+          
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input 
+                type="checkbox" 
+                name="is_featured" 
+                value="true"
+                {% if product and product.is_featured %}checked{% endif %}
+              >
+              <span class="checkmark"></span>
+              <span>Актуальный товар</span>
+            </label>
+            <small class="form-hint">Товар появится на главной в «Актуальные модели»</small>
+          </div>
+          
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input 
+                type="checkbox" 
+                name="is_active" 
+                value="true"
+                {% if not product or product.is_active %}checked{% endif %}
+              >
+              <span class="checkmark"></span>
+              <span>Активен (отображается на сайте)</span>
+            </label>
+          </div>
+        </div>
+        
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary btn-lg">
+            {% if product %}💾 Сохранить изменения{% else %}➕ Добавить товар{% endif %}
+          </button>
+          <a href="/admin/products" class="btn btn-outline">Отмена</a>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // При загрузке страницы загружаем подкатегории если категория уже выбрана
+  document.addEventListener('DOMContentLoaded', function() {
+    const categorySelect = document.getElementById('category_id');
+    if (categorySelect && categorySelect.value) {
+      loadSubcategories(
+        categorySelect.value, 
+        'subcategory_id', 
+        '{{ product.subcategory_id if product else "" }}'
+      );
+    }
+  });
+</script>
+{% endblock %}
+

@@ -1,0 +1,132 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Дашборд{% endblock %}
+{% block page_title %}Дашборд{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+  <!-- Статистика -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon">👢</div>
+      <div class="stat-info">
+        <span class="stat-value">{{ stats.products_count }}</span>
+        <span class="stat-label">Товаров</span>
+      </div>
+    </div>
+    
+    <div class="stat-card stat-new">
+      <div class="stat-icon">✨</div>
+      <div class="stat-info">
+        <span class="stat-value">{{ stats.new_count }}</span>
+        <span class="stat-label">Новинок</span>
+      </div>
+    </div>
+    
+    <div class="stat-card stat-sale">
+      <div class="stat-icon">🏷️</div>
+      <div class="stat-info">
+        <span class="stat-value">{{ stats.sale_count }}</span>
+        <span class="stat-label">Со скидкой</span>
+      </div>
+    </div>
+    
+    <div class="stat-card stat-promo">
+      <div class="stat-icon">🔥</div>
+      <div class="stat-info">
+        <span class="stat-value">{{ stats.promotions_count }}</span>
+        <span class="stat-label">Акций</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Быстрые действия -->
+  <div class="quick-actions">
+    <h2>Быстрые действия</h2>
+    <div class="actions-grid">
+      <a href="/admin/products/add" class="action-card">
+        <span class="action-icon">➕</span>
+        <span class="action-text">Добавить товар</span>
+      </a>
+      <a href="/admin/promotions/add" class="action-card">
+        <span class="action-icon">🔥</span>
+        <span class="action-text">Создать акцию</span>
+      </a>
+      <a href="/admin/products" class="action-card">
+        <span class="action-icon">📋</span>
+        <span class="action-text">Все товары</span>
+      </a>
+      <a href="/" class="action-card" target="_blank">
+        <span class="action-icon">🌐</span>
+        <span class="action-text">Открыть сайт</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Последние товары -->
+  {% if recent_products %}
+  <div class="recent-products">
+    <h2>Последние добавленные товары</h2>
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Фото</th>
+            <th>Название</th>
+            <th>Категория</th>
+            <th>Цена</th>
+            <th>Статус</th>
+            <th>Действия</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for product in recent_products %}
+          <tr>
+            <td class="td-image">
+              {% if product.image_url %}
+              <img src="{{ product.image_url }}" alt="{{ product.name }}" class="table-image">
+              {% else %}
+              <div class="no-image">📷</div>
+              {% endif %}
+            </td>
+            <td>
+              <strong>{{ product.name }}</strong>
+              {% if product.is_new %}<span class="badge badge-new">Новинка</span>{% endif %}
+              {% if product.old_price and product.old_price > product.price %}<span class="badge badge-sale">Скидка</span>{% endif %}
+            </td>
+            <td>
+              {% if product.subcategory %}
+                {{ product.subcategory.category.name }} / {{ product.subcategory.name }}
+              {% else %}
+                —
+              {% endif %}
+            </td>
+            <td>
+              <span class="price">{{ product.price | int }} ₽</span>
+              {% if product.old_price %}
+              <span class="old-price">{{ product.old_price | int }} ₽</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if product.is_active %}
+              <span class="status status-active">Активен</span>
+              {% else %}
+              <span class="status status-inactive">Скрыт</span>
+              {% endif %}
+            </td>
+            <td class="td-actions">
+              <a href="/admin/products/edit/{{ product.id }}" class="btn btn-sm btn-secondary">✏️</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="view-all">
+      <a href="/admin/products" class="btn btn-outline">Все товары →</a>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+

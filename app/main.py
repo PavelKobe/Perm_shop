@@ -8,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session, joinedload
 
+from .admin import router as admin_router
 from .database import get_db, init_db
 from .models import Category, Subcategory, Product, Promotion
 from .seo import generate_sitemap_xml
@@ -24,8 +25,9 @@ app.mount("/static", StaticFiles(directory=static_dir), name="static")
 templates = Jinja2Templates(directory=str(templates_dir))
 
 
-# Jinja2 фильтр для парсинга JSON размеров
+# Jinja2 фильтры
 def parse_sizes(sizes_json: str | None) -> List[int]:
+    """Парсинг JSON размеров."""
     if not sizes_json:
         return []
     try:
@@ -34,7 +36,21 @@ def parse_sizes(sizes_json: str | None) -> List[int]:
         return []
 
 
+def from_json(value: str | None) -> list | dict | None:
+    """Универсальный парсинг JSON."""
+    if not value:
+        return []
+    try:
+        return json.loads(value)
+    except (json.JSONDecodeError, TypeError):
+        return []
+
+
 templates.env.filters["parse_sizes"] = parse_sizes
+templates.env.filters["from_json"] = from_json
+
+# Подключаем админ-панель
+app.include_router(admin_router)
 
 
 @app.on_event("startup")
@@ -54,23 +70,6 @@ def read_index(request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
         .all()
     )
 
-    # Актуальные товары (is_featured) и новинки (is_new)
-    featured_products = (
-        db.query(Product)
-        .filter(Product.is_active.is_(True), Product.is_featured.is_(True))
-        .order_by(Product.created_at.desc())
-        .limit(8)
-        .all()
-    )
-
-    new_products = (
-        db.query(Product)
-        .filter(Product.is_active.is_(True), Product.is_new.is_(True))
-        .order_by(Product.created_at.desc())
-        .limit(4)
-        .all()
-    )
-
     # Активные акции для баннера
     promotions = (
         db.query(Promotion)
@@ -85,11 +84,103 @@ def read_index(request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
         {
             "request": request,
             "categories": categories,
-            "featured_products": featured_products,
-            "new_products": new_products,
             "promotions": promotions,
             "page_title": "Женская кожаная обувь в Перми — ТЦ «Алмаз»",
             "meta_description": "Магазин женской кожаной обуви в Перми. Зимняя, демисезонная и летняя обувь из натуральной кожи. ТЦ «Алмаз», ул. Куйбышева, 37.",
+        },
+    )
+
+
+# =============================================================================
+# АКТУАЛЬНЫЕ ТОВАРЫ
+# =============================================================================
+@app.get("/featured", response_class=HTMLResponse)
+def featured_page(request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
+    all_categories = db.query(Category).options(joinedload(Category.subcategories)).order_by(Category.sort_order).all()
+
+    products = (
+        db.query(Product)
+        .options(joinedload(Product.subcategory).joinedload(Subcategory.category))
+        .filter(Product.is_active.is_(True), Product.is_featured.is_(True))
+        .order_by(Product.created_at.desc())
+        .all()
+    )
+
+    return templates.TemplateResponse(
+        "products_list.html",
+        {
+            "request": request,
+            "categories": all_categories,
+            "products": products,
+            "list_title": "Актуальные модели",
+            "list_subtitle": "Популярные и рекомендуемые модели сезона",
+            "list_icon": "⭐",
+            "page_title": "Актуальные модели — женская кожаная обувь | ТЦ «Алмаз», Пермь",
+            "meta_description": "Актуальные модели женской кожаной обуви в Перми. ТЦ «Алмаз», ул. Куйбышева, 37.",
+        },
+    )
+
+
+# =============================================================================
+# НОВИНКИ
+# =============================================================================
+@app.get("/new", response_class=HTMLResponse)
+def new_page(request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
+    all_categories = db.query(Category).options(joinedload(Category.subcategories)).order_by(Category.sort_order).all()
+
+    products = (
+        db.query(Product)
+        .options(joinedload(Product.subcategory).joinedload(Subcategory.category))
+        .filter(Product.is_active.is_(True), Product.is_new.is_(True))
+        .order_by(Product.created_at.desc())
+        .all()
+    )
+
+    return templates.TemplateResponse(
+        "products_list.html",
+        {
+            "request": request,
+            "categories": all_categories,
+            "products": products,
+            "list_title": "Новинки",
+            "list_subtitle": "Новые поступления в нашем магазине",
+            "list_icon": "🆕",
+            "page_title": "Новинки — женская кожаная обувь | ТЦ «Алмаз», Пермь",
+            "meta_description": "Новинки женской кожаной обуви в Перми. Свежие поступления в ТЦ «Алмаз».",
+        },
+    )
+
+
+# =============================================================================
+# СО СКИДКОЙ
+# =============================================================================
+@app.get("/sale", response_class=HTMLResponse)
+def sale_page(request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
+    all_categories = db.query(Category).options(joinedload(Category.subcategories)).order_by(Category.sort_order).all()
+
+    products = (
+        db.query(Product)
+        .options(joinedload(Product.subcategory).joinedload(Subcategory.category))
+        .filter(
+            Product.is_active.is_(True),
+            Product.old_price.isnot(None),
+            Product.old_price > Product.price,
+        )
+        .order_by(Product.created_at.desc())
+        .all()
+    )
+
+    return templates.TemplateResponse(
+        "products_list.html",
+        {
+            "request": request,
+            "categories": all_categories,
+            "products": products,
+            "list_title": "Со скидкой",
+            "list_subtitle": "Выгодные предложения и распродажа",
+            "list_icon": "🏷️",
+            "page_title": "Скидки на обувь — женская кожаная обувь | ТЦ «Алмаз», Пермь",
+            "meta_description": "Скидки на женскую кожаную обувь в Перми. Выгодные цены в ТЦ «Алмаз».",
         },
     )
 
@@ -113,8 +204,6 @@ def read_category(slug: str, request: Request, db: Session = Depends(get_db)) ->
             {
                 "request": request,
                 "categories": categories,
-                "featured_products": [],
-                "new_products": [],
                 "page_title": "Категория не найдена — ТЦ «Алмаз»",
             },
             status_code=404,

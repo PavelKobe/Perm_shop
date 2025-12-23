@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>{% block title %}Админ-панель{% endblock %} — Планета Обуви</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='/admin.css') }}">
+</head>
+<body>
+  <div class="admin-layout">
+    <!-- Сайдбар -->
+    <aside class="admin-sidebar">
+      <div class="sidebar-header">
+        <a href="/admin" class="sidebar-logo">👠 Админка</a>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/admin" class="nav-item {% if request.url.path == '/admin' %}active{% endif %}">
+          <span class="nav-icon">📊</span>
+          <span>Дашборд</span>
+        </a>
+        <a href="/admin/products" class="nav-item {% if '/products' in request.url.path %}active{% endif %}">
+          <span class="nav-icon">👢</span>
+          <span>Товары</span>
+        </a>
+        <a href="/admin/promotions" class="nav-item {% if '/promotions' in request.url.path %}active{% endif %}">
+          <span class="nav-icon">🔥</span>
+          <span>Акции</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="/" class="nav-item" target="_blank">
+          <span class="nav-icon">🌐</span>
+          <span>На сайт</span>
+        </a>
+        <a href="/admin/logout" class="nav-item logout">
+          <span class="nav-icon">🚪</span>
+          <span>Выход</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Основной контент -->
+    <main class="admin-main">
+      <header class="admin-header">
+        <h1>{% block page_title %}Админ-панель{% endblock %}</h1>
+        <div class="header-actions">
+          {% block header_actions %}{% endblock %}
+        </div>
+      </header>
+      
+      <div class="admin-content">
+        {% block content %}{% endblock %}
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Динамическая загрузка подкатегорий
+    function loadSubcategories(categoryId, targetSelectId, selectedValue) {
+      const select = document.getElementById(targetSelectId);
+      if (!select) return;
+      
+      select.innerHTML = '<option value="">Загрузка...</option>';
+      
+      if (!categoryId) {
+        select.innerHTML = '<option value="">Сначала выберите категорию</option>';
+        return;
+      }
+      
+      fetch(`/admin/api/subcategories/${categoryId}`)
+        .then(response => response.json())
+        .then(data => {
+          select.innerHTML = '<option value="">Выберите подкатегорию</option>';
+          data.forEach(item => {
+            const option = document.createElement('option');
+            option.value = item.id;
+            option.textContent = item.name;
+            if (selectedValue && item.id == selectedValue) {
+              option.selected = true;
+            }
+            select.appendChild(option);
+          });
+        })
+        .catch(() => {
+          select.innerHTML = '<option value="">Ошибка загрузки</option>';
+        });
+    }
+  </script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>
+

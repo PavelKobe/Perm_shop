@@ -9,7 +9,7 @@
     <meta property="og:description" content="{{ meta_description or 'Женская кожаная обувь в Перми: зимняя, демисезонная, летняя. ТЦ «Алмаз».' }}" />
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="ru_RU" />
-    <link rel="stylesheet" href="{{ url_for('static', path='/style.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', path='/style.css') }}?v=3" />
     <script src="https://unpkg.com/htmx.org@2.0.0" defer></script>
     {% block head_extra %}{% endblock %}
   </head>
@@ -37,6 +37,9 @@
             </div>
             {% endfor %}
           {% endif %}
+          <a href="/featured" class="nav-link">⭐ Актуальные</a>
+          <a href="/new" class="nav-link">🆕 Новинки</a>
+          <a href="/sale" class="nav-link nav-link-sale">🏷️ Со скидкой</a>
           <a href="/promotions" class="nav-link">🔥 Акции</a>
           <a href="/map" class="nav-link">📍 Как нас найти</a>
         </nav>
@@ -53,7 +56,7 @@
           <p itemprop="name"><strong>Планета Обуви — ТЦ «Алмаз»</strong></p>
           <p itemprop="address" itemscope itemtype="https://schema.org/PostalAddress">
             <span itemprop="addressLocality">Пермь</span>, 
-            <span itemprop="streetAddress">ул. Куйбышева, 37, цокольный этаж</span>
+            <span itemprop="streetAddress">ул. Куйбышева, 37, цокольный этаж, отдел «ADEMA»</span>
           </p>
           <p>Телефон: <a href="tel:+79028018513" itemprop="telephone">+7 (902) 801-85-13</a></p>
           <p itemprop="openingHours" content="Mo-Su 10:00-21:00">Ежедневно 10:00–21:00</p>

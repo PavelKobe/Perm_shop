@@ -9,7 +9,7 @@
       Большой выбор моделей, примерка на месте.
     </p>
     <p class="hero-contacts animate-slide-up" style="--delay: 0.3s">
-      <span class="contact-item">📍 ул. Куйбышева, 37, цокольный этаж</span>
+      <span class="contact-item">📍 ул. Куйбышева, 37, цокольный этаж, отдел «ADEMA»</span>
       <a href="tel:+79028018513" class="contact-phone pulse-on-hover">📞 +7 (902) 801-85-13</a>
     </p>
   </div>
@@ -90,71 +90,6 @@
   </div>
 </section>
 
-<!-- Актуальные товары -->
-{% if featured_products %}
-<section class="product-section">
-  <div class="product-section-header">
-    <h2 class="section-title animate-fade-in">Актуальные модели</h2>
-    <div class="product-filters">
-      <button
-        hx-get="/hx/products/featured"
-        hx-target="#product-list"
-        hx-swap="innerHTML"
-        class="filter-btn active"
-      >
-        Актуальные
-      </button>
-      <button
-        hx-get="/hx/products/new"
-        hx-target="#product-list"
-        hx-swap="innerHTML"
-        class="filter-btn"
-      >
-        Новинки
-      </button>
-      <button
-        hx-get="/hx/products/sale"
-        hx-target="#product-list"
-        hx-swap="innerHTML"
-        class="filter-btn"
-      >
-        Со скидкой
-      </button>
-    </div>
-  </div>
-
-  <div id="product-list" class="product-grid">
-    {% for product in featured_products %}
-    <article class="product-card animate-product" style="--delay: {{ loop.index * 0.08 }}s" itemscope itemtype="https://schema.org/Product">
-      <a href="/product/{{ product.id }}-{{ product.slug }}" class="product-card-link">
-        <div class="product-card-image">
-          {% if product.image_url %}
-          <img src="{{ product.image_url }}" alt="{{ product.name }}" itemprop="image" loading="lazy" />
-          {% endif %}
-          {% if product.is_new %}
-          <span class="product-badge product-badge-new shimmer">Новинка</span>
-          {% endif %}
-          {% if product.old_price %}
-          <span class="product-badge product-badge-sale pulse-badge">Скидка</span>
-          {% endif %}
-        </div>
-        <div class="product-card-body">
-          <h3 class="product-card-title" itemprop="name">{{ product.name }}</h3>
-          <div class="product-card-price" itemprop="offers" itemscope itemtype="https://schema.org/Offer">
-            <span class="price" itemprop="price" content="{{ product.price }}">{{ product.price | int }} ₽</span>
-            <meta itemprop="priceCurrency" content="RUB" />
-            {% if product.old_price %}
-            <span class="old-price">{{ product.old_price | int }} ₽</span>
-            {% endif %}
-          </div>
-        </div>
-      </a>
-    </article>
-    {% endfor %}
-  </div>
-</section>
-{% endif %}
-
 <!-- О магазине -->
 <section class="about-section">
   <div class="about-grid">
@@ -208,37 +143,6 @@
   </div>
 </section>
 
-<!-- Новинки -->
-{% if new_products %}
-<section class="product-section">
-  <h2 class="section-title animate-fade-in">Новинки</h2>
-  <div class="product-grid">
-    {% for product in new_products %}
-    <article class="product-card animate-product" style="--delay: {{ loop.index * 0.1 }}s" itemscope itemtype="https://schema.org/Product">
-      <a href="/product/{{ product.id }}-{{ product.slug }}" class="product-card-link">
-        <div class="product-card-image">
-          {% if product.image_url %}
-          <img src="{{ product.image_url }}" alt="{{ product.name }}" itemprop="image" loading="lazy" />
-          {% endif %}
-          <span class="product-badge product-badge-new shimmer">Новинка</span>
-        </div>
-        <div class="product-card-body">
-          <h3 class="product-card-title" itemprop="name">{{ product.name }}</h3>
-          <div class="product-card-price" itemprop="offers" itemscope itemtype="https://schema.org/Offer">
-            <span class="price" itemprop="price" content="{{ product.price }}">{{ product.price | int }} ₽</span>
-            <meta itemprop="priceCurrency" content="RUB" />
-            {% if product.old_price %}
-            <span class="old-price">{{ product.old_price | int }} ₽</span>
-            {% endif %}
-          </div>
-        </div>
-      </a>
-    </article>
-    {% endfor %}
-  </div>
-</section>
-{% endif %}
-
 <!-- Отзывы -->
 <section class="reviews-section">
   <h2 class="section-title animate-fade-in">Отзывы покупателей</h2>
@@ -285,6 +189,7 @@
     <h2 class="section-title">Знаете свой размер?</h2>
     <p>Выберите размер и посмотрите, что есть в наличии</p>
     <div class="size-buttons">
+      <a href="/products?size=34" class="size-btn">34</a>
       <a href="/products?size=35" class="size-btn">35</a>
       <a href="/products?size=36" class="size-btn">36</a>
       <a href="/products?size=37" class="size-btn popular">37</a>

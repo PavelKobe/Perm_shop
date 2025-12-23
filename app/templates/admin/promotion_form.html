@@ -1,0 +1,106 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{{ form_title }}{% endblock %}
+{% block page_title %}{{ form_title }}{% endblock %}
+
+{% block header_actions %}
+<a href="/admin/promotions" class="btn btn-outline">← Назад к списку</a>
+{% endblock %}
+
+{% block content %}
+<div class="form-page">
+  <form method="post" action="{{ form_action }}" class="promotion-form">
+    <div class="form-container">
+      <div class="form-card">
+        <h3>Информация об акции</h3>
+        
+        <div class="form-group">
+          <label for="title">Название акции <span class="required">*</span></label>
+          <input 
+            type="text" 
+            id="title" 
+            name="title" 
+            required 
+            value="{{ promotion.title if promotion else '' }}"
+            placeholder="Например: Скидка 20% на зимнюю обувь"
+          >
+        </div>
+        
+        <div class="form-group">
+          <label for="discount_text">Текст скидки</label>
+          <input 
+            type="text" 
+            id="discount_text" 
+            name="discount_text" 
+            value="{{ promotion.discount_text if promotion and promotion.discount_text else '' }}"
+            placeholder="Например: -20% или До 3000 ₽"
+          >
+          <small class="form-hint">Короткий текст для отображения на баннере</small>
+        </div>
+        
+        <div class="form-group">
+          <label for="description">Описание</label>
+          <textarea 
+            id="description" 
+            name="description" 
+            rows="4"
+            placeholder="Подробное описание условий акции"
+          >{{ promotion.description if promotion and promotion.description else '' }}</textarea>
+        </div>
+      </div>
+      
+      <div class="form-card">
+        <h3>Период проведения</h3>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="start_date">Дата начала</label>
+            <input 
+              type="date" 
+              id="start_date" 
+              name="start_date" 
+              value="{{ promotion.start_date.isoformat() if promotion and promotion.start_date else '' }}"
+            >
+          </div>
+          
+          <div class="form-group">
+            <label for="end_date">Дата окончания</label>
+            <input 
+              type="date" 
+              id="end_date" 
+              name="end_date" 
+              value="{{ promotion.end_date.isoformat() if promotion and promotion.end_date else '' }}"
+            >
+          </div>
+        </div>
+        <small class="form-hint">Оставьте пустым для бессрочной акции</small>
+      </div>
+      
+      <div class="form-card">
+        <h3>Статус</h3>
+        
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input 
+              type="checkbox" 
+              name="is_active" 
+              value="true"
+              {% if not promotion or promotion.is_active %}checked{% endif %}
+            >
+            <span class="checkmark"></span>
+            <span>Активна (отображается на сайте)</span>
+          </label>
+        </div>
+      </div>
+      
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary btn-lg">
+          {% if promotion %}💾 Сохранить изменения{% else %}➕ Добавить акцию{% endif %}
+        </button>
+        <a href="/admin/promotions" class="btn btn-outline">Отмена</a>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}
+

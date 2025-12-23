@@ -1,0 +1,78 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Акции{% endblock %}
+{% block page_title %}Акции{% endblock %}
+
+{% block header_actions %}
+<a href="/admin/promotions/add" class="btn btn-primary">➕ Добавить акцию</a>
+{% endblock %}
+
+{% block content %}
+<div class="promotions-page">
+  <div class="table-container">
+    {% if promotions %}
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Название</th>
+          <th>Скидка</th>
+          <th>Период</th>
+          <th width="80">Статус</th>
+          <th width="100">Действия</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for promo in promotions %}
+        <tr>
+          <td>
+            <strong>{{ promo.title }}</strong>
+            {% if promo.description %}
+            <br><small class="text-muted">{{ promo.description[:100] }}{% if promo.description|length > 100 %}...{% endif %}</small>
+            {% endif %}
+          </td>
+          <td>
+            {% if promo.discount_text %}
+            <span class="discount-badge">{{ promo.discount_text }}</span>
+            {% else %}
+            <span class="text-muted">—</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if promo.start_date or promo.end_date %}
+              {% if promo.start_date %}{{ promo.start_date.strftime('%d.%m.%Y') }}{% else %}...{% endif %}
+              —
+              {% if promo.end_date %}{{ promo.end_date.strftime('%d.%m.%Y') }}{% else %}...{% endif %}
+            {% else %}
+              <span class="text-muted">Бессрочно</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if promo.is_active %}
+            <span class="status status-active">Активна</span>
+            {% else %}
+            <span class="status status-inactive">Скрыта</span>
+            {% endif %}
+          </td>
+          <td class="td-actions">
+            <a href="/admin/promotions/edit/{{ promo.id }}" class="btn btn-sm btn-secondary" title="Редактировать">✏️</a>
+            <form method="post" action="/admin/promotions/delete/{{ promo.id }}" style="display:inline"
+                  onsubmit="return confirm('Удалить акцию «{{ promo.title }}»?')">
+              <button type="submit" class="btn btn-sm btn-danger" title="Удалить">🗑️</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">🔥</div>
+      <h3>Акций пока нет</h3>
+      <p>Создайте первую акцию для привлечения покупателей</p>
+      <a href="/admin/promotions/add" class="btn btn-primary">➕ Добавить акцию</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+

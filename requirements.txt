@@ -5,5 +5,7 @@ sqlalchemy
 alembic
 python-multipart
 pydantic
+python-dotenv
+itsdangerous
 
 
