@@ -92,6 +92,57 @@ def read_index(request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
 
 
 # =============================================================================
+# ВСЕ ТОВАРЫ / ФИЛЬТР ПО РАЗМЕРУ
+# =============================================================================
+@app.get("/products", response_class=HTMLResponse)
+def products_page(
+    request: Request,
+    size: int | None = None,
+    db: Session = Depends(get_db),
+) -> HTMLResponse:
+    all_categories = db.query(Category).options(joinedload(Category.subcategories)).order_by(Category.sort_order).all()
+
+    products = (
+        db.query(Product)
+        .options(joinedload(Product.subcategory).joinedload(Subcategory.category))
+        .filter(Product.is_active.is_(True))
+        .order_by(Product.created_at.desc())
+        .all()
+    )
+
+    if size is not None:
+        filtered: list[Product] = []
+        for product in products:
+            sizes = from_json(product.sizes_json)
+            if isinstance(sizes, list) and any(int(s) == size for s in sizes if s is not None):
+                filtered.append(product)
+        products = filtered
+
+    list_title = f"Размер {size}" if size is not None else "Все товары"
+    list_subtitle = "Доступные модели с выбранным размером" if size is not None else "Все модели в наличии"
+    page_title = f"Обувь размера {size} — ТЦ «Алмаз», Пермь" if size is not None else "Каталог обуви — ТЦ «Алмаз», Пермь"
+    meta_description = (
+        f"Женская кожаная обувь размера {size} в наличии. ТЦ «Алмаз», ул. Куйбышева, 37."
+        if size is not None
+        else "Каталог женской кожаной обуви в Перми: зимняя, демисезонная, летняя. ТЦ «Алмаз»."
+    )
+
+    return templates.TemplateResponse(
+        "products_list.html",
+        {
+            "request": request,
+            "categories": all_categories,
+            "products": products,
+            "list_title": list_title,
+            "list_subtitle": list_subtitle,
+            "list_icon": "📏",
+            "page_title": page_title,
+            "meta_description": meta_description,
+        },
+    )
+
+
+# =============================================================================
 # АКТУАЛЬНЫЕ ТОВАРЫ
 # =============================================================================
 @app.get("/featured", response_class=HTMLResponse)
