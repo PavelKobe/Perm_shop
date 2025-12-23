@@ -14,7 +14,7 @@ from .seo import generate_sitemap_xml
 
 BASE_DIR = Path(__file__).resolve().parent
 
-app = FastAPI(title="Отдел женской кожаной обуви в ТЦ «Карнавал» в Перми")
+app = FastAPI(title="Отдел женской кожаной обуви в ТЦ «Алмаз» в Перми")
 
 static_dir = BASE_DIR.parent / "static"
 templates_dir = BASE_DIR / "templates"
@@ -44,7 +44,7 @@ def read_index(request: Request, db: Session = Depends(get_db)) -> HTMLResponse:
             "request": request,
             "categories": categories,
             "products": products,
-            "page_title": "Отдел женской кожаной обуви в ТЦ «Карнавал» в Перми",
+            "page_title": "Отдел женской кожаной обуви в ТЦ «Алмаз» в Перми",
         },
     )
 
@@ -59,7 +59,7 @@ def read_category(slug: str, request: Request, db: Session = Depends(get_db)) ->
             "request": request,
             "categories": db.query(Category).all(),
             "products": [],
-            "page_title": "Отдел женской кожаной обуви в ТЦ «Карнавал» в Перми",
+            "page_title": "Отдел женской кожаной обуви в ТЦ «Алмаз» в Перми",
             },
             status_code=404,
         )
@@ -97,7 +97,7 @@ def read_category(slug: str, request: Request, db: Session = Depends(get_db)) ->
             "active_color": color or "",
             "available_sizes": available_sizes,
             "available_colors": available_colors,
-            "page_title": f"{category.name} — отдел женской кожаной обуви в ТЦ «Карнавал» в Перми",
+            "page_title": f"{category.name} — отдел женской кожаной обуви в ТЦ «Алмаз» в Перми",
         },
     )
 
@@ -121,7 +121,7 @@ def read_product(
             "request": request,
             "categories": db.query(Category).all(),
             "products": [],
-            "page_title": "Товар не найден — отдел женской кожаной обуви в ТЦ «Карнавал» в Перми",
+            "page_title": "Товар не найден — отдел женской кожаной обуви в ТЦ «Алмаз» в Перми",
             },
             status_code=404,
         )
@@ -138,7 +138,7 @@ def read_product(
             "request": request,
             "product": product,
             "breadcrumbs": breadcrumbs,
-            "page_title": f"{product.name} — отдел женской кожаной обуви в ТЦ «Карнавал» в Перми",
+            "page_title": f"{product.name} — отдел женской кожаной обуви в ТЦ «Алмаз» в Перми",
         },
     )
 
@@ -270,7 +270,7 @@ def promotions_page(request: Request, db: Session = Depends(get_db)) -> HTMLResp
         {
             "request": request,
             "promotions": promotions,
-            "page_title": "Акции отдела женской обуви в ТЦ «Карнавал»",
+            "page_title": "Акции отдела женской обуви в ТЦ «Алмаз»",
         },
     )
 
@@ -281,7 +281,7 @@ def map_page(request: Request) -> HTMLResponse:
         "map.html",
         {
             "request": request,
-            "page_title": "Как нас найти — ТЦ «Карнавал», Пермь",
+            "page_title": "Как нас найти — Планета Обуви в ТЦ «Алмаз», Пермь",
         },
     )
 

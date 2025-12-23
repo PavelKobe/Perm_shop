@@ -1,4 +1,4 @@
-# Отдел женской кожаной обуви в ТЦ «Карнавал» (сайт‑визитка)
+# Отдел женской кожаной обуви в ТЦ «Алмаз» (сайт‑визитка)
 
 Серверный рендер на FastAPI + Jinja2 + SQLite. Страницы:
 - Главная `/`
@@ -134,13 +134,22 @@ python -i
 ## 4. Как добавить фото товара
 
 1. Подготовь JPG/PNG (желательно 3:4 или 4:5, чтобы красиво влезло).
-2. Положи файл в:
+2. Класть фото удобнее по блокам/категориям в `static/images/products/`:
 
-static/images/products/<имя_файла>.jpg3. В `image_url` у товара укажи:
+   - `static/images/products/zimnyaya/` — зимняя женская обувь (`zhenskaya-zimnyaya-obuv`)
+   - `static/images/products/demisezon/` — демисезонная обувь (`zhenskaya-demisezonnyaya-obuv`)
+   - `static/images/products/skidki/` — обувь со скидкой (`obuv-so-skidkoy`)
+   - `static/images/products/novinki/` — новинки (`novinki`)
 
-/static/images/products/<имя_файла>.jpgНапример:
+3. В `image_url` у товара укажи полный путь, который будет отдаваться как есть:
 
-image_url="/static/images/products/zimnie-botinki-oslo.jpg"Карточки:
+   `/static/images/products/<подпапка>/<имя_файла>.jpg`
+
+   Например:
+
+   `image_url="/static/images/products/zimnyaya/zimnie-botinki-oslo.jpg"`
+
+Карточки:
 - На странице `/products`: берется `product.image_url` и кладётся в `<img src="{{ product.image_url }}">`.
 - На странице товара `/product/{id}-{slug}` — то же самое.
 
@@ -157,9 +166,9 @@ image_url="/static/images/products/zimnie-botinki-oslo.jpg"Карточки:
   itemscope
   itemtype="https://schema.org/LocalBusiness"
 >
-  <h1 itemprop="name">Отдел женской кожаной обуви в ТЦ «Карнавал»</h1>
+  <h1 itemprop="name">Отдел женской кожаной обуви в ТЦ «Алмаз»</h1>
   <p itemprop="description">
-    Отдел по продаже женской кожаной обуви в торговом центре «Карнавал» в Перми. Зимняя и демисезонная обувь из
+    Отдел по продаже женской кожаной обуви в торговом центре «Алмаз» в Перми. Зимняя и демисезонная обувь из
     натуральной кожи.
   </p>
 
@@ -169,7 +178,7 @@ image_url="/static/images/products/zimnie-botinki-oslo.jpg"Карточки:
       <p>
         <span itemprop="address" itemscope itemtype="https://schema.org/PostalAddress">
           <span itemprop="addressLocality">г. Пермь</span>,
-          <span itemprop="streetAddress">ул. Ленина, ТЦ «Карнавал»</span>
+          <span itemprop="streetAddress">ул. Ленина, ТЦ «Алмаз»</span>
         </span>
       </p>
       <p>
@@ -187,7 +196,7 @@ image_url="/static/images/products/zimnie-botinki-oslo.jpg"Карточки:
       <meta itemprop="longitude" content="56.234821" />
       <div class="map-embed">
         <iframe
-          src="https://yandex.ru/map-widget/v1/?text=Карнавал, Пермь&amp;z=17&amp;l=map"
+          src="https://yandex.ru/map-widget/v1/?ll=56.235221%2C58.007726&z=17&l=map&pt=56.235221%2C58.007726%2Cpm2rdm"
           width="100%"
           height="320"
           frameborder="0"
@@ -200,7 +209,7 @@ image_url="/static/images/products/zimnie-botinki-oslo.jpg"Карточки:
 
 Редактируй текст внутри `streetAddress` и `addressLocality`:
 - `г. Пермь` → другой город (если нужно),
-- `ул. Ленина, ТЦ «Карнавал»` → твой фактический адрес/этаж/секция.
+- `ул. Ленина, ТЦ «Алмаз»` → твой фактический адрес/этаж/секция.
 
 ### 5.2. Обновляем телефон
 
@@ -243,7 +252,7 @@ static/images/shop/front.jpg2. В `index.html` (и при желании в `pro
 <div class="hero-photo">
   <img
     src="/static/images/shop/front.jpg"
-    alt="Отдел женской кожаной обуви в ТЦ «Карнавал»"
+    alt="Отдел женской кожаной обуви в ТЦ «Алмаз»"
     class="hero-photo-img"
   />
 </div>3. Добавь немного стилей в `static/style.css`, если хочешь:
