@@ -24,6 +24,7 @@ run_dev.bat
 # Или вручную:
 .\.venv\Scripts\activate
 uvicorn app.main:app --reload --port 8002
+uvicorn app.main:app --reload --log-level info --port 8002
 ```
 
 Открыть: http://127.0.0.1:8002/

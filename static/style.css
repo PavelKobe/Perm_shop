@@ -1741,6 +1741,144 @@ a {
   transform: translateY(-2px);
 }
 
+.product-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.55);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 16px;
+}
+
+.product-modal-backdrop.is-open {
+  display: flex;
+}
+
+.product-modal-shell {
+  max-width: 900px;
+  width: 100%;
+  max-height: 90vh;
+  background-color: #fdf7ee;
+  border-radius: 16px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  border: 1px solid #e1c9ab;
+}
+
+.product-modal {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 24px;
+  padding: 24px;
+}
+
+.product-modal-image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f3f4f6;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.product-modal-image img {
+  max-width: 100%;
+  max-height: 80vh;
+  object-fit: contain;
+}
+
+.product-modal-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.product-modal-title {
+  margin: 0;
+  font-size: 22px;
+  color: #2b1b12;
+}
+
+.product-modal-price {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 18px;
+}
+
+.product-modal-price .price {
+  font-weight: 700;
+  color: #2b1b12;
+}
+
+.product-modal-price .old-price {
+  text-decoration: line-through;
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+.product-modal-price .discount-percent {
+  font-size: 13px;
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.product-modal-attr {
+  font-size: 14px;
+  color: #4b5563;
+}
+
+.product-modal-attr .attr-label {
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+.product-modal-description {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #4b3f35;
+}
+
+.product-modal-cta {
+  font-size: 14px;
+  color: #4b5563;
+}
+
+.product-modal-actions {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.product-card-image-btn {
+  padding: 0;
+  margin: 0 0 8px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+}
+
+.product-card-image-btn:focus-visible {
+  outline: 2px solid #2b1b12;
+  outline-offset: 2px;
+}
+
+@media (max-width: 768px) {
+  .product-modal {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+
+  .product-modal-shell {
+    max-height: 95vh;
+  }
+}
+
 /* Navigation sale link highlight */
 .nav-link-sale {
   color: #ef4444 !important;

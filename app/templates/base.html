@@ -50,6 +50,13 @@
       {% block content %}{% endblock %}
     </main>
 
+    <!-- Глобальное модальное окно товара -->
+    <div id="product-modal-backdrop" class="product-modal-backdrop">
+      <div id="product-modal" class="product-modal-shell" role="dialog" aria-modal="true">
+        <div id="product-modal-content"></div>
+      </div>
+    </div>
+
     <footer class="footer" itemscope itemtype="https://schema.org/LocalBusiness">
       <div class="container footer-inner">
         <div class="footer-info">
@@ -64,5 +71,44 @@
         <p class="footer-copy">&copy; 2025 Планета Обуви, ТЦ «Алмаз», Пермь.</p>
       </div>
     </footer>
+
+    <script>
+      (function () {
+        const backdrop = document.getElementById('product-modal-backdrop');
+        const content = document.getElementById('product-modal-content');
+
+        if (!backdrop || !content) return;
+
+        function openProductModal() {
+          backdrop.classList.add('is-open');
+        }
+
+        function closeProductModal() {
+          backdrop.classList.remove('is-open');
+        }
+
+        // Закрытие по клику на фон
+        backdrop.addEventListener('click', function (event) {
+          if (event.target === backdrop) {
+            closeProductModal();
+          }
+        });
+
+        // Делегирование клика по кнопке с data-product-modal-close
+        document.addEventListener('click', function (event) {
+          const closeBtn = event.target.closest('[data-product-modal-close]');
+          if (closeBtn) {
+            closeProductModal();
+          }
+        });
+
+        // Открывать модалку после успешной подгрузки контента HTMX
+        document.body.addEventListener('htmx:afterSwap', function (event) {
+          if (event.target === content) {
+            openProductModal();
+          }
+        });
+      })();
+    </script>
   </body>
 </html>

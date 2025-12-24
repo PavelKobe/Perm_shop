@@ -1,0 +1,62 @@
+<div class="product-modal">
+  {% if product.image_url %}
+  <div class="product-modal-image">
+    <img src="{{ product.image_url }}" alt="{{ product.name }}">
+  </div>
+  {% endif %}
+
+  <div class="product-modal-info">
+    <h2 class="product-modal-title">{{ product.name }}</h2>
+
+    <div class="product-modal-price">
+      <span class="price">{{ product.price | int }} ₽</span>
+      {% if product.old_price %}
+      <span class="old-price">{{ product.old_price | int }} ₽</span>
+      <span class="discount-percent">
+        -{{ ((1 - product.price / product.old_price) * 100) | int }}%
+      </span>
+      {% endif %}
+    </div>
+
+    {% if product.color %}
+    <div class="product-modal-attr">
+      <span class="attr-label">Цвет:</span>
+      <span class="attr-value">{{ product.color }}</span>
+    </div>
+    {% endif %}
+
+    {% if product.sizes_json %}
+    <div class="product-modal-attr">
+      <span class="attr-label">Размеры:</span>
+      <span class="attr-value sizes-list">
+        {% for size in product.sizes_json | parse_sizes %}
+        <span class="size-tag">{{ size }}</span>
+        {% endfor %}
+      </span>
+    </div>
+    {% endif %}
+
+    {% if product.description %}
+    <div class="product-modal-description">
+      {{ product.description }}
+    </div>
+    {% endif %}
+
+    <div class="product-modal-cta">
+      <p>📍 Примерка в магазине:</p>
+      <p><strong>ТЦ «Алмаз»</strong>, ул. Куйбышева, 37, цокольный этаж, отдел «ADEMA»</p>
+      <p>📞 <a href="tel:+79028018513">+7 (902) 801-85-13</a></p>
+    </div>
+
+    <div class="product-modal-actions">
+      <a href="/product/{{ product.id }}-{{ product.slug }}" class="btn btn-primary">
+        Открыть страницу товара
+      </a>
+      <button type="button" class="btn btn-outline" data-product-modal-close>
+        Закрыть
+      </button>
+    </div>
+  </div>
+</div>
+
+

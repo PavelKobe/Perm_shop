@@ -1,4 +1,5 @@
 import json
+import logging
 from pathlib import Path
 from typing import List
 
@@ -17,6 +18,7 @@ from .seo import generate_sitemap_xml
 BASE_DIR = Path(__file__).resolve().parent
 
 app = FastAPI(title="Женская кожаная обувь в Перми — ТЦ «Алмаз»")
+logger = logging.getLogger("uvicorn.error")
 
 static_dir = BASE_DIR.parent / "static"
 templates_dir = BASE_DIR / "templates"
@@ -247,7 +249,7 @@ def read_category(slug: str, request: Request, db: Session = Depends(get_db)) ->
         .filter(Category.slug == slug)
         .first()
     )
-
+    
     if category is None:
         categories = db.query(Category).options(joinedload(Category.subcategories)).order_by(Category.sort_order).all()
         return templates.TemplateResponse(
@@ -259,16 +261,16 @@ def read_category(slug: str, request: Request, db: Session = Depends(get_db)) ->
             },
             status_code=404,
         )
-
+    
     # Все категории для навигации
     all_categories = db.query(Category).options(joinedload(Category.subcategories)).order_by(Category.sort_order).all()
-
+    
     # Хлебные крошки
     breadcrumbs = [
         {"name": "Главная", "url": "/"},
         {"name": category.name, "url": f"/category/{category.slug}"},
     ]
-
+    
     return templates.TemplateResponse(
         "category.html",
         {
@@ -278,6 +280,87 @@ def read_category(slug: str, request: Request, db: Session = Depends(get_db)) ->
             "breadcrumbs": breadcrumbs,
             "page_title": f"{category.name} из кожи — купить в Перми | ТЦ «Алмаз»",
             "meta_description": f"{category.name} из натуральной кожи в Перми. Большой выбор моделей в ТЦ «Алмаз». Примерка на месте.",
+        },
+    )
+    
+    
+# =============================================================================
+# СТРАНИЦА ТОВАРА
+# =============================================================================
+@app.get("/product/{product_id_slug}", response_class=HTMLResponse)
+def read_product(
+    product_id_slug: str,
+    request: Request,
+    db: Session = Depends(get_db),
+) -> HTMLResponse:
+    """Страница товара по URL вида /product/{id}-{slug}."""
+    try:
+        id_part, slug_part = product_id_slug.split("-", 1)
+        product_id = int(id_part)
+    except (ValueError, TypeError):
+        logger.info("[PRODUCT] bad product_id_slug=%s", product_id_slug)
+        return _not_found_response(request, db)
+
+    product = (
+        db.query(Product)
+        .options(joinedload(Product.subcategory).joinedload(Subcategory.category))
+        .filter(Product.id == product_id, Product.slug == slug_part, Product.is_active.is_(True))
+        .first()
+    )
+
+    if product is None:
+        logger.info("[PRODUCT] product not found id=%s slug=%s", product_id, slug_part)
+        return _not_found_response(request, db)
+
+    # Все категории для навигации
+    all_categories = db.query(Category).options(joinedload(Category.subcategories)).order_by(Category.sort_order).all()
+
+    # Хлебные крошки
+    breadcrumbs = [{"name": "Главная", "url": "/"}]
+    if product.subcategory and product.subcategory.category:
+        cat = product.subcategory.category
+        subcat = product.subcategory
+        breadcrumbs.append({"name": cat.name, "url": f"/category/{cat.slug}"})
+        breadcrumbs.append({"name": subcat.name, "url": f"/{cat.slug}/{subcat.slug}"})
+    breadcrumbs.append({"name": product.name, "url": f"/product/{product.id}-{product.slug}"})
+
+    return templates.TemplateResponse(
+        "product.html",
+        {
+            "request": request,
+            "categories": all_categories,
+            "product": product,
+            "breadcrumbs": breadcrumbs,
+            "page_title": f"{product.name} — {int(product.price)} ₽ | ТЦ «Алмаз», Пермь",
+            "meta_description": product.description[:160] if product.description else f"{product.name} из натуральной кожи. Купить в Перми.",
+        },
+    )
+
+
+@app.get("/product-modal/{product_id}", response_class=HTMLResponse)
+def read_product_modal(
+    product_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+) -> HTMLResponse:
+    """Partial для модального окна товара (используется HTMX)."""
+    product = (
+        db.query(Product)
+        .options(joinedload(Product.subcategory).joinedload(Subcategory.category))
+        .filter(Product.id == product_id)
+        .first()
+    )
+
+    logger.info("[MODAL] product_id=%s, found=%s", product_id, bool(product))
+
+    if product is None:
+        return _not_found_response(request, db)
+
+    return templates.TemplateResponse(
+        "partials/product_modal.html",
+        {
+            "request": request,
+            "product": product,
         },
     )
 
@@ -342,51 +425,6 @@ def read_subcategory(
             "breadcrumbs": breadcrumbs,
             "page_title": seo_title,
             "meta_description": f"{season_prefix} {subcategory.name.lower()} из натуральной кожи. Купить в Перми, ТЦ «Алмаз». Примерка на месте.",
-        },
-    )
-
-
-# =============================================================================
-# СТРАНИЦА ТОВАРА
-# =============================================================================
-@app.get("/product/{product_id}-{slug}", response_class=HTMLResponse)
-def read_product(
-    product_id: int,
-    slug: str,
-    request: Request,
-    db: Session = Depends(get_db),
-) -> HTMLResponse:
-    product = (
-        db.query(Product)
-        .options(joinedload(Product.subcategory).joinedload(Subcategory.category))
-        .filter(Product.id == product_id, Product.slug == slug, Product.is_active.is_(True))
-        .first()
-    )
-
-    if product is None:
-        return _not_found_response(request, db)
-
-    # Все категории для навигации
-    all_categories = db.query(Category).options(joinedload(Category.subcategories)).order_by(Category.sort_order).all()
-
-    # Хлебные крошки
-    breadcrumbs = [{"name": "Главная", "url": "/"}]
-    if product.subcategory and product.subcategory.category:
-        cat = product.subcategory.category
-        subcat = product.subcategory
-        breadcrumbs.append({"name": cat.name, "url": f"/category/{cat.slug}"})
-        breadcrumbs.append({"name": subcat.name, "url": f"/{cat.slug}/{subcat.slug}"})
-    breadcrumbs.append({"name": product.name, "url": f"/product/{product.id}-{product.slug}"})
-
-    return templates.TemplateResponse(
-        "product.html",
-        {
-            "request": request,
-            "categories": all_categories,
-            "product": product,
-            "breadcrumbs": breadcrumbs,
-            "page_title": f"{product.name} — {int(product.price)} ₽ | ТЦ «Алмаз», Пермь",
-            "meta_description": product.description[:160] if product.description else f"{product.name} из натуральной кожи. Купить в Перми.",
         },
     )
 
