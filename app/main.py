@@ -565,6 +565,15 @@ def sitemap_xml(request: Request, db: Session = Depends(get_db)) -> Response:
 
 
 # =============================================================================
+# HEALTH CHECK
+# =============================================================================
+@app.get("/health")
+def health_check() -> dict:
+    """Health check endpoint for monitoring."""
+    return {"status": "ok", "service": "shoe_store"}
+
+
+# =============================================================================
 # ВСПОМОГАТЕЛЬНЫЕ
 # =============================================================================
 def _not_found_response(request: Request, db: Session) -> HTMLResponse:

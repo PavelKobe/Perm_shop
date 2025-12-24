@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+env/
+*.egg-info/
+dist/
+build/
+
+# Database
+instance/*.db
+instance/*.db-journal
+instance/*.sqlite
+instance/*.sqlite3
+
+# Environment variables
+.env
+.env.local
+.env.production.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Product images (optional - uncomment if you want to exclude from Git)
+# static/images/products/**/*.jpg
+# static/images/products/**/*.png
+# static/images/products/**/*.webp
+# static/images/products/**/*.jpeg
+
+# Keep directory structure
+!static/images/products/**/
+!static/images/products/**/.gitkeep
+

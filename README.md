@@ -6,7 +6,7 @@
 
 ---
 
-## 1. Быстрый старт
+## 1. Быстрый старт (Development)
 
 ```powershell
 cd C:\Users\p.kobelev\Perm_ecom\shoe_store_perm
@@ -28,6 +28,18 @@ uvicorn app.main:app --reload --log-level info --port 8002
 ```
 
 Открыть: http://127.0.0.1:8002/
+
+---
+
+## 1.2. Развертывание в продакшн
+
+Подробная инструкция по деплою на VPS сервер находится в файле **[DEPLOY.md](DEPLOY.md)**.
+
+**Краткая сводка:**
+- Подготовка проекта: `.gitignore`, `.env.production.example`, скрипты деплоя
+- Настройка VPS: Ubuntu 22.04, Python 3.11, Nginx, SSL (Let's Encrypt)
+- Автоматизация: systemd service, бэкапы через cron, скрипты деплоя
+- Оценка стоимости: ~300-600₽/мес для малого бизнеса
 
 ---
 

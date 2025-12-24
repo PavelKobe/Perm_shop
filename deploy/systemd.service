@@ -1,0 +1,25 @@
+# Systemd service file for shoe_store_perm
+# Place this file at: /etc/systemd/system/shoeapp.service
+# Then run: sudo systemctl daemon-reload && sudo systemctl enable shoeapp
+
+[Unit]
+Description=Shoe Store FastAPI Application
+After=network.target
+
+[Service]
+User=shoeapp
+Group=shoeapp
+WorkingDirectory=/home/shoeapp/shoe_store_perm
+Environment="PATH=/home/shoeapp/shoe_store_perm/.venv/bin"
+EnvironmentFile=/home/shoeapp/shoe_store_perm/.env
+ExecStart=/home/shoeapp/shoe_store_perm/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8002 --workers 2 --log-config /home/shoeapp/shoe_store_perm/logging.conf
+Restart=always
+RestartSec=10
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
+
