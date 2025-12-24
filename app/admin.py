@@ -202,17 +202,15 @@ def dashboard(
 # ТОВАРЫ
 # =============================================================================
 
-@router.get("/products", response_class=HTMLResponse)
-def products_list(
-    request: Request,
-    admin: str = Depends(require_admin),
-    db: Session = Depends(get_db),
+
+def get_products_with_filters(
+    db: Session,
     category_id: Optional[int] = None,
     subcategory_id: Optional[int] = None,
     search: Optional[str] = None,
     show_deleted: Optional[str] = None,
-) -> HTMLResponse:
-    """Список товаров."""
+) -> tuple[list[Product], list[Category]]:
+    """Возвращает отфильтрованные товары и список категорий для фильтров."""
     query = db.query(Product).options(
         joinedload(Product.subcategory).joinedload(Subcategory.category)
     )
@@ -230,6 +228,27 @@ def products_list(
     
     products = query.order_by(Product.created_at.desc()).all()
     categories = db.query(Category).options(joinedload(Category.subcategories)).all()
+    return products, categories
+
+
+@router.get("/products", response_class=HTMLResponse)
+def products_list(
+    request: Request,
+    admin: str = Depends(require_admin),
+    db: Session = Depends(get_db),
+    category_id: Optional[int] = None,
+    subcategory_id: Optional[int] = None,
+    search: Optional[str] = None,
+    show_deleted: Optional[str] = None,
+) -> HTMLResponse:
+    """Список товаров."""
+    products, categories = get_products_with_filters(
+        db=db,
+        category_id=category_id,
+        subcategory_id=subcategory_id,
+        search=search,
+        show_deleted=show_deleted,
+    )
     
     return templates.TemplateResponse(
         "admin/products.html",
@@ -238,6 +257,39 @@ def products_list(
             "admin": admin,
             "products": products,
             "categories": categories,
+            "selected_category_id": category_id,
+            "selected_subcategory_id": subcategory_id,
+            "search": search or "",
+            "show_deleted": bool(show_deleted),
+        },
+    )
+
+
+@router.get("/products/partial", response_class=HTMLResponse)
+def products_table_partial(
+    request: Request,
+    admin: str = Depends(require_admin),
+    db: Session = Depends(get_db),
+    category_id: Optional[int] = None,
+    subcategory_id: Optional[int] = None,
+    search: Optional[str] = None,
+    show_deleted: Optional[str] = None,
+) -> HTMLResponse:
+    """Фрагмент таблицы товаров для AJAX-поиска/фильтров."""
+    products, _ = get_products_with_filters(
+        db=db,
+        category_id=category_id,
+        subcategory_id=subcategory_id,
+        search=search,
+        show_deleted=show_deleted,
+    )
+
+    return templates.TemplateResponse(
+        "admin/_products_table.html",
+        {
+            "request": request,
+            "admin": admin,
+            "products": products,
             "selected_category_id": category_id,
             "selected_subcategory_id": subcategory_id,
             "search": search or "",
