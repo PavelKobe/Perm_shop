@@ -1,4 +1,4 @@
-# Systemd service file for shoe_store_perm
+# Systemd service file for Perm_shop
 # Place this file at: /etc/systemd/system/shoeapp.service
 # Then run: sudo systemctl daemon-reload && sudo systemctl enable shoeapp
 
@@ -9,10 +9,10 @@ After=network.target
 [Service]
 User=shoeapp
 Group=shoeapp
-WorkingDirectory=/home/shoeapp/shoe_store_perm
-Environment="PATH=/home/shoeapp/shoe_store_perm/.venv/bin"
-EnvironmentFile=/home/shoeapp/shoe_store_perm/.env
-ExecStart=/home/shoeapp/shoe_store_perm/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8002 --workers 2 --log-config /home/shoeapp/shoe_store_perm/logging.conf
+WorkingDirectory=/home/shoeapp/Perm_shop
+Environment="PATH=/home/shoeapp/Perm_shop/.venv/bin"
+EnvironmentFile=/home/shoeapp/Perm_shop/.env
+ExecStart=/home/shoeapp/Perm_shop/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8002 --workers 2 --log-config /home/shoeapp/Perm_shop/logging.conf
 Restart=always
 RestartSec=10
 

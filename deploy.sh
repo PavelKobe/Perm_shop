@@ -1,12 +1,12 @@
 #!/bin/bash
 # Deployment script for shoe_store_perm
-# Run this on the server: bash /home/shoeapp/deploy.sh
+# Run this on the server: bash /home/shoeapp/Perm_shop/deploy.sh
 
 set -e  # Exit on error
 
 echo "🚀 Starting deployment..."
 
-cd /home/shoeapp/shoe_store_perm
+cd /home/shoeapp/Perm_shop
 
 # Activate virtual environment
 source .venv/bin/activate
